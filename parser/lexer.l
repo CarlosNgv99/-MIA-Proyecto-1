@@ -52,7 +52,7 @@ func (l *lexer) Lex(lval *yySymType) int {
 %yym l.Mark()
 
 digit         [0-9]|{unicodeDigit}
-digits		  [0-9]+|{unicodeDigit}+
+digits		  [0-9]*|{unicodeDigit}*
 id    {letter}({letter}|{digit})*
 letter        [_a-zA-Z]|{unicodeLetter}
 diskName	  {letter}({letter}|{digit})*"."disk
@@ -66,6 +66,7 @@ unicodeLetter \x80
 	c = l.Rule0()
 
 [ \t\r\n]+
+pause  lval.token = string(l.TokenBytes(nil)); return pause  
 exec  lval.token = string(l.TokenBytes(nil)); return exec  
 path  lval.token = string(l.TokenBytes(nil)); return path  
 mount  lval.token = string(l.TokenBytes(nil)); return mount  

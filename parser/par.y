@@ -7,7 +7,6 @@ import (
   "io"
   "bufio"
 	"os"
-	"log"
 )
 
 type node struct {
@@ -62,6 +61,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %token <token> number
 %token <token> name
 %token <token> path
+%token <token> pause
 %token <token> rmdisk
 %token <token> size
 %token <token> tpe
@@ -94,6 +94,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <token> number
 %type <token> name
 %type <token> path
+%type <token> pause
 %type <token> rmdisk
 %type <token> size
 %type <token> tpe
@@ -106,6 +107,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 
 // Non terminals
 %type <node> MOUNT
+%type <node> PAUSE
 %type <node> UNMOUNT
 %type <node> EXEC
 %type <node> MKDISK
@@ -130,12 +132,14 @@ INSTRUCTION: MOUNT
 			| MKDISK
 			| RMDISK
 			| FDISK
-			| MKFS;
+			| MKFS
+			| PAUSE;
 
+PAUSE: pause { pauseAction() };
 
 EXEC: exec hyphen path arrow route {$$ = Node($1)};
 
-MKDISK: mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen name arrow diskName {$$ = Node($1)}
+MKDISK: mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen name arrow diskName {mkdiskAction($10)}
 ;
 
 MOUNT: mount hyphen path arrow route hyphen name arrow mount_name {$$ = Node($1)};
@@ -174,16 +178,6 @@ func Run() {
 		}
 	}
 
-}
-
-func mkdiskAction() {
-	//Create a folder/directory at a full qualified path
-	err := os.Mkdir("/home/carlosngv/temp", 0755)
-    if err != nil {
-        log.Fatal(err)
-    }
-
-    
 }
 
 func input(fi *bufio.Reader) (string, bool) {

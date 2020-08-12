@@ -12,7 +12,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"os"
 )
 
@@ -37,7 +36,7 @@ func (n node) print(out io.Writer, indent string) {
 func Node(name string) node           { return node{name: name} }
 func (n node) append(nn ...node) node { n.children = append(n.children, nn...); return n }
 
-//line par.y:35
+//line par.y:34
 type yySymType struct {
 	yys   int
 	node  node
@@ -67,13 +66,14 @@ const mkdisk = 57365
 const number = 57366
 const name = 57367
 const path = 57368
-const rmdisk = 57369
-const size = 57370
-const tpe = 57371
-const unit = 57372
-const unmount = 57373
-const route = 57374
-const quote = 57375
+const pause = 57369
+const rmdisk = 57370
+const size = 57371
+const tpe = 57372
+const unit = 57373
+const unmount = 57374
+const route = 57375
+const quote = 57376
 
 var yyToknames = [...]string{
 	"$end",
@@ -102,6 +102,7 @@ var yyToknames = [...]string{
 	"number",
 	"name",
 	"path",
+	"pause",
 	"rmdisk",
 	"size",
 	"tpe",
@@ -117,7 +118,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line par.y:157
+//line par.y:161
 
 // Run exported
 func Run() {
@@ -139,15 +140,6 @@ func Run() {
 
 }
 
-func mkdiskAction() {
-	//Create a folder/directory at a full qualified path
-	err := os.Mkdir("/home/carlosngv/temp", 0755)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-}
-
 func input(fi *bufio.Reader) (string, bool) {
 	s, err := fi.ReadString('\n')
 	if err != nil {
@@ -165,61 +157,63 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 62
+const yyLast = 64
 
 var yyAct = [...]int{
-	13, 58, 16, 55, 57, 42, 40, 39, 11, 50,
-	31, 17, 14, 29, 49, 60, 15, 30, 28, 26,
-	12, 48, 54, 56, 32, 44, 27, 59, 47, 46,
-	45, 25, 24, 23, 22, 21, 20, 19, 62, 41,
-	43, 61, 53, 52, 51, 38, 37, 36, 35, 34,
-	33, 3, 1, 2, 18, 10, 9, 8, 7, 6,
-	5, 4,
+	14, 60, 17, 57, 59, 44, 42, 41, 12, 52,
+	33, 18, 15, 31, 51, 62, 19, 16, 32, 30,
+	28, 13, 50, 56, 58, 34, 46, 29, 61, 49,
+	48, 47, 27, 26, 25, 24, 23, 22, 21, 64,
+	43, 45, 63, 55, 54, 53, 40, 39, 38, 37,
+	36, 35, 3, 1, 2, 20, 10, 9, 8, 7,
+	6, 5, 11, 4,
 }
 
 var yyPact = [...]int{
 	-11, -1000, -11, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, 22, 21, 20, 19, 18, 17, 16, -1000, -7,
-	10, -8, -15, -9, -18, 7, 46, -1000, 45, 44,
-	43, 42, 41, -25, -26, 31, -27, 33, 9, 15,
-	-1000, 14, -1000, -1000, 13, -4, -12, -20, 40, 39,
-	38, 2, -30, 6, -1000, -28, -1000, -32, 12, -10,
-	37, 29, -1000,
+	-1000, -1000, 23, 22, 21, 20, 19, 18, 17, -1000,
+	-1000, -6, 11, -7, -16, -8, -19, 8, 47, -1000,
+	46, 45, 44, 43, 42, -26, -27, 32, -28, 34,
+	10, 16, -1000, 15, -1000, -1000, 14, -3, -12, -21,
+	41, 40, 39, 3, -31, 7, -1000, -29, -1000, -33,
+	13, -10, 38, 30, -1000,
 }
 
 var yyPgo = [...]int{
-	0, 61, 60, 59, 58, 57, 56, 55, 51, 53,
-	52,
+	0, 63, 62, 61, 60, 59, 58, 57, 56, 52,
+	54, 53,
 }
 
 var yyR1 = [...]int{
-	0, 10, 9, 9, 8, 8, 8, 8, 8, 8,
-	8, 3, 4, 1, 2, 6, 5, 7, 7,
+	0, 11, 10, 10, 9, 9, 9, 9, 9, 9,
+	9, 9, 2, 4, 5, 1, 3, 7, 6, 8,
+	8,
 }
 
 var yyR2 = [...]int{
 	0, 1, 1, 2, 1, 1, 1, 1, 1, 1,
-	1, 5, 15, 9, 3, 5, 5, 5, 9,
+	1, 1, 1, 5, 15, 9, 3, 5, 5, 5,
+	9,
 }
 
 var yyChk = [...]int{
-	-1000, -10, -9, -8, -1, -2, -3, -4, -5, -6,
-	-7, 19, 31, 11, 23, 27, 13, 22, -8, 15,
-	15, 15, 15, 15, 15, 15, 26, 16, 26, 28,
-	26, 28, 17, 4, 4, 4, 4, 4, 4, 32,
-	32, 8, 32, 7, 16, 15, 15, 15, 25, 26,
-	29, 4, 4, 4, 20, 33, 17, 32, 33, 15,
-	25, 4, 9,
+	-1000, -11, -10, -9, -1, -3, -4, -5, -6, -7,
+	-8, -2, 19, 32, 11, 23, 28, 13, 22, 27,
+	-9, 15, 15, 15, 15, 15, 15, 15, 26, 16,
+	26, 29, 26, 29, 17, 4, 4, 4, 4, 4,
+	4, 33, 33, 8, 33, 7, 16, 15, 15, 15,
+	25, 26, 30, 4, 4, 4, 20, 34, 17, 33,
+	34, 15, 25, 4, 9,
 }
 
 var yyDef = [...]int{
 	0, -2, 1, 2, 4, 5, 6, 7, 8, 9,
-	10, 0, 0, 0, 0, 0, 0, 0, 3, 0,
-	0, 0, 0, 0, 0, 0, 0, 14, 0, 0,
+	10, 11, 0, 0, 0, 0, 0, 0, 0, 12,
+	3, 0, 0, 0, 0, 0, 0, 0, 0, 16,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	11, 0, 16, 15, 17, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 13, 0, 18, 0, 0, 0,
-	0, 0, 12,
+	0, 0, 13, 0, 18, 17, 19, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 15, 0, 20, 0,
+	0, 0, 0, 0, 14,
 }
 
 var yyTok1 = [...]int{
@@ -230,7 +224,7 @@ var yyTok2 = [...]int{
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 	22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-	32, 33,
+	32, 33, 34,
 }
 
 var yyTok3 = [...]int{
@@ -574,51 +568,57 @@ yydefault:
 	// dummy call; replaced with literal code
 	switch yynt {
 
-	case 11:
-		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:136
-		{
-			yyVAL.node = Node(yyDollar[1].token)
-		}
 	case 12:
-		yyDollar = yyS[yypt-15 : yypt+1]
+		yyDollar = yyS[yypt-1 : yypt+1]
 //line par.y:138
 		{
-			yyVAL.node = Node(yyDollar[1].token)
+			pauseAction()
 		}
 	case 13:
-		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:141
+		yyDollar = yyS[yypt-5 : yypt+1]
+//line par.y:140
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 14:
-		yyDollar = yyS[yypt-3 : yypt+1]
-//line par.y:143
+		yyDollar = yyS[yypt-15 : yypt+1]
+//line par.y:142
 		{
-			yyVAL.node = Node(yyDollar[1].token)
+			mkdiskAction(yyDollar[10].token)
 		}
 	case 15:
-		yyDollar = yyS[yypt-5 : yypt+1]
+		yyDollar = yyS[yypt-9 : yypt+1]
 //line par.y:145
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 16:
-		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:148
+		yyDollar = yyS[yypt-3 : yypt+1]
+//line par.y:147
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 17:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:152
+//line par.y:149
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 18:
+		yyDollar = yyS[yypt-5 : yypt+1]
+//line par.y:152
+		{
+			yyVAL.node = Node(yyDollar[1].token)
+		}
+	case 19:
+		yyDollar = yyS[yypt-5 : yypt+1]
+//line par.y:156
+		{
+			yyVAL.node = Node(yyDollar[1].token)
+		}
+	case 20:
 		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:153
+//line par.y:157
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
