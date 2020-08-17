@@ -51,12 +51,12 @@ func (l *lexer) Lex(lval *yySymType) int {
 %yyn c = l.Next()
 %yym l.Mark()
 
-digit         [0-9]|{unicodeDigit}
-digits		  [0-9]*|{unicodeDigit}*
+digit         [0-9]+|{unicodeDigit}+
 id    {letter}({letter}|{digit})*
 letter        [_a-zA-Z]|{unicodeLetter}
-diskName	  {letter}({letter}|{digit})*"."disk
-route         "/"("/"|"-"|"_"|"."|[a-zA-Z0-9])+
+diskName	  {letter}({letter}|"_"|{digit})*"."dsk
+mia_file	  {letter}({letter}|"_"|{digit})+"."mia
+route         "/"("/"|"-"|"_"|[a-zA-Z0-9]|".")* "/"
 arrow           "-"">"
 hyphen          "-"
 quote			\"
@@ -77,13 +77,15 @@ name  lval.token = string(l.TokenBytes(nil)); return name
 size  lval.token = string(l.TokenBytes(nil)); return size  
 mkdisk  lval.token = string(l.TokenBytes(nil)); return mkdisk  
 {id} lval.token = string(l.TokenBytes(nil)); return id 
-{route} lval.token = string(l.TokenBytes(nil)); return route
 {hyphen} lval.token = string(l.TokenBytes(nil)); return hyphen
 {arrow} lval.token = string(l.TokenBytes(nil)); return arrow
 {digit} lval.token = string(l.TokenBytes(nil)); return digit
-{digits} lval.token = string(l.TokenBytes(nil)); return digits
 {quote} lval.token = string(l.TokenBytes(nil)); return quote
 {diskName} lval.token = string(l.TokenBytes(nil)); return diskName
+{mia_file} lval.token = string(l.TokenBytes(nil)); return mia_file
+{route} lval.token = string(l.TokenBytes(nil)); return route
+
+
 
 %%
 	if c, ok := l.Abort(); ok { return int(c) }

@@ -43,7 +43,7 @@ state 2
 	pause  shift 19
 	rmdisk  shift 16
 	unmount  shift 13
-	.  reduce 1 (src line 124)
+	.  reduce 1 (src line 127)
 
 	MOUNT  goto 4
 	PAUSE  goto 11
@@ -58,55 +58,55 @@ state 2
 state 3
 	INSTRUCTIONS:  INSTRUCTION.    (2)
 
-	.  reduce 2 (src line 126)
+	.  reduce 2 (src line 129)
 
 
 state 4
 	INSTRUCTION:  MOUNT.    (4)
 
-	.  reduce 4 (src line 129)
+	.  reduce 4 (src line 132)
 
 
 state 5
 	INSTRUCTION:  UNMOUNT.    (5)
 
-	.  reduce 5 (src line 130)
+	.  reduce 5 (src line 133)
 
 
 state 6
 	INSTRUCTION:  EXEC.    (6)
 
-	.  reduce 6 (src line 131)
+	.  reduce 6 (src line 134)
 
 
 state 7
 	INSTRUCTION:  MKDISK.    (7)
 
-	.  reduce 7 (src line 132)
+	.  reduce 7 (src line 135)
 
 
 state 8
 	INSTRUCTION:  RMDISK.    (8)
 
-	.  reduce 8 (src line 133)
+	.  reduce 8 (src line 136)
 
 
 state 9
 	INSTRUCTION:  FDISK.    (9)
 
-	.  reduce 9 (src line 134)
+	.  reduce 9 (src line 137)
 
 
 state 10
 	INSTRUCTION:  MKFS.    (10)
 
-	.  reduce 10 (src line 135)
+	.  reduce 10 (src line 138)
 
 
 state 11
 	INSTRUCTION:  PAUSE.    (11)
 
-	.  reduce 11 (src line 136)
+	.  reduce 11 (src line 139)
 
 
 state 12
@@ -131,7 +131,7 @@ state 14
 
 
 state 15
-	MKDISK:  mkdisk.hyphen size arrow digits hyphen path arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk.hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName 
 
 	hyphen  shift 24
 	.  error
@@ -162,13 +162,13 @@ state 18
 state 19
 	PAUSE:  pause.    (12)
 
-	.  reduce 12 (src line 138)
+	.  reduce 12 (src line 141)
 
 
 state 20
 	INSTRUCTIONS:  INSTRUCTIONS INSTRUCTION.    (3)
 
-	.  reduce 3 (src line 127)
+	.  reduce 3 (src line 130)
 
 
 state 21
@@ -193,7 +193,7 @@ state 23
 
 
 state 24
-	MKDISK:  mkdisk hyphen.size arrow digits hyphen path arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen.size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName 
 
 	size  shift 31
 	.  error
@@ -231,7 +231,7 @@ state 28
 state 29
 	UNMOUNT:  unmount hyphen idn.    (16)
 
-	.  reduce 16 (src line 147)
+	.  reduce 16 (src line 150)
 
 
 state 30
@@ -242,7 +242,7 @@ state 30
 
 
 state 31
-	MKDISK:  mkdisk hyphen size.arrow digits hyphen path arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size.arrow digit hyphen path arrow quote route quote hyphen name arrow diskName 
 
 	arrow  shift 37
 	.  error
@@ -285,9 +285,9 @@ state 36
 
 
 state 37
-	MKDISK:  mkdisk hyphen size arrow.digits hyphen path arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow.digit hyphen path arrow quote route quote hyphen name arrow diskName 
 
-	digits  shift 43
+	digit  shift 43
 	.  error
 
 
@@ -323,11 +323,11 @@ state 41
 state 42
 	EXEC:  exec hyphen path arrow route.    (13)
 
-	.  reduce 13 (src line 140)
+	.  reduce 13 (src line 143)
 
 
 state 43
-	MKDISK:  mkdisk hyphen size arrow digits.hyphen path arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit.hyphen path arrow quote route quote hyphen name arrow diskName 
 
 	hyphen  shift 48
 	.  error
@@ -336,13 +336,13 @@ state 43
 state 44
 	RMDISK:  rmdisk hyphen path arrow route.    (18)
 
-	.  reduce 18 (src line 152)
+	.  reduce 18 (src line 155)
 
 
 state 45
 	FDISK:  fdisk hyphen size arrow digit.    (17)
 
-	.  reduce 17 (src line 149)
+	.  reduce 17 (src line 152)
 
 
 state 46
@@ -350,7 +350,7 @@ state 46
 	MKFS:  mkfs hyphen id arrow idn.hyphen tpe arrow id 
 
 	hyphen  shift 49
-	.  reduce 19 (src line 156)
+	.  reduce 19 (src line 159)
 
 
 state 47
@@ -361,7 +361,7 @@ state 47
 
 
 state 48
-	MKDISK:  mkdisk hyphen size arrow digits hyphen.path arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen.path arrow quote route quote hyphen name arrow diskName 
 
 	path  shift 51
 	.  error
@@ -382,7 +382,7 @@ state 50
 
 
 state 51
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path.arrow quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path.arrow quote route quote hyphen name arrow diskName 
 
 	arrow  shift 54
 	.  error
@@ -403,7 +403,7 @@ state 53
 
 
 state 54
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow.quote route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow.quote route quote hyphen name arrow diskName 
 
 	quote  shift 57
 	.  error
@@ -419,11 +419,11 @@ state 55
 state 56
 	MOUNT:  mount hyphen path arrow route hyphen name arrow mount_name.    (15)
 
-	.  reduce 15 (src line 145)
+	.  reduce 15 (src line 148)
 
 
 state 57
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote.route quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote.route quote hyphen name arrow diskName 
 
 	route  shift 59
 	.  error
@@ -432,51 +432,51 @@ state 57
 state 58
 	MKFS:  mkfs hyphen id arrow idn hyphen tpe arrow id.    (20)
 
-	.  reduce 20 (src line 157)
+	.  reduce 20 (src line 160)
 
 
 state 59
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote route.quote hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote route.quote hyphen name arrow diskName 
 
 	quote  shift 60
 	.  error
 
 
 state 60
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote route quote.hyphen name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote route quote.hyphen name arrow diskName 
 
 	hyphen  shift 61
 	.  error
 
 
 state 61
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen.name arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen.name arrow diskName 
 
 	name  shift 62
 	.  error
 
 
 state 62
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen name.arrow diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name.arrow diskName 
 
 	arrow  shift 63
 	.  error
 
 
 state 63
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen name arrow.diskName 
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow.diskName 
 
 	diskName  shift 64
 	.  error
 
 
 state 64
-	MKDISK:  mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen name arrow diskName.    (14)
+	MKDISK:  mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName.    (14)
 
-	.  reduce 14 (src line 142)
+	.  reduce 14 (src line 145)
 
 
-34 terminals, 12 nonterminals
+35 terminals, 12 nonterminals
 21 grammar rules, 65/8000 states
 0 shift/reduce, 0 reduce/reduce conflicts reported
 61 working sets used
@@ -487,4 +487,4 @@ memory: parser 19/120000
 8 entries saved by goto default
 Optimizer space used: output 64/120000
 64 table entries, 0 zero
-maximum spread: 34, maximum offset: 34
+maximum spread: 35, maximum offset: 35

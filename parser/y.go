@@ -8,6 +8,7 @@ import __yyfmt__ "fmt"
 //line par.y:2
 
 import (
+	"MIA-P1/actions"
 	"bufio"
 	"bytes"
 	"fmt"
@@ -36,7 +37,7 @@ func (n node) print(out io.Writer, indent string) {
 func Node(name string) node           { return node{name: name} }
 func (n node) append(nn ...node) node { n.children = append(n.children, nn...); return n }
 
-//line par.y:34
+//line par.y:35
 type yySymType struct {
 	yys   int
 	node  node
@@ -58,22 +59,23 @@ const hyphen = 57357
 const idn = 57358
 const id = 57359
 const less = 57360
-const mount = 57361
-const mount_name = 57362
-const mbr = 57363
-const mkfs = 57364
-const mkdisk = 57365
-const number = 57366
-const name = 57367
-const path = 57368
-const pause = 57369
-const rmdisk = 57370
-const size = 57371
-const tpe = 57372
-const unit = 57373
-const unmount = 57374
-const route = 57375
-const quote = 57376
+const mia_file = 57361
+const mount = 57362
+const mount_name = 57363
+const mbr = 57364
+const mkfs = 57365
+const mkdisk = 57366
+const number = 57367
+const name = 57368
+const path = 57369
+const pause = 57370
+const rmdisk = 57371
+const size = 57372
+const tpe = 57373
+const unit = 57374
+const unmount = 57375
+const route = 57376
+const quote = 57377
 
 var yyToknames = [...]string{
 	"$end",
@@ -94,6 +96,7 @@ var yyToknames = [...]string{
 	"idn",
 	"id",
 	"less",
+	"mia_file",
 	"mount",
 	"mount_name",
 	"mbr",
@@ -118,7 +121,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line par.y:161
+//line par.y:164
 
 // Run exported
 func Run() {
@@ -160,11 +163,11 @@ const yyPrivate = 57344
 const yyLast = 64
 
 var yyAct = [...]int{
-	14, 60, 17, 57, 59, 44, 42, 41, 12, 52,
-	33, 18, 15, 31, 51, 62, 19, 16, 32, 30,
-	28, 13, 50, 56, 58, 34, 46, 29, 61, 49,
+	14, 60, 17, 57, 59, 44, 42, 41, 52, 12,
+	33, 31, 18, 15, 51, 32, 62, 19, 16, 30,
+	28, 50, 13, 56, 58, 34, 46, 29, 61, 49,
 	48, 47, 27, 26, 25, 24, 23, 22, 21, 64,
-	43, 45, 63, 55, 54, 53, 40, 39, 38, 37,
+	45, 43, 63, 55, 54, 53, 40, 39, 38, 37,
 	36, 35, 3, 1, 2, 20, 10, 9, 8, 7,
 	6, 5, 11, 4,
 }
@@ -172,10 +175,10 @@ var yyAct = [...]int{
 var yyPact = [...]int{
 	-11, -1000, -11, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
 	-1000, -1000, 23, 22, 21, 20, 19, 18, 17, -1000,
-	-1000, -6, 11, -7, -16, -8, -19, 8, 47, -1000,
-	46, 45, 44, 43, 42, -26, -27, 32, -28, 34,
-	10, 16, -1000, 15, -1000, -1000, 14, -3, -12, -21,
-	41, 40, 39, 3, -31, 7, -1000, -29, -1000, -33,
+	-1000, -7, 11, -8, -19, -12, -20, 8, 47, -1000,
+	46, 45, 44, 43, 42, -27, -28, 34, -29, 33,
+	10, 16, -1000, 15, -1000, -1000, 14, -5, -13, -23,
+	41, 40, 39, 2, -32, 7, -1000, -30, -1000, -34,
 	13, -10, 38, 30, -1000,
 }
 
@@ -198,12 +201,12 @@ var yyR2 = [...]int{
 
 var yyChk = [...]int{
 	-1000, -11, -10, -9, -1, -3, -4, -5, -6, -7,
-	-8, -2, 19, 32, 11, 23, 28, 13, 22, 27,
-	-9, 15, 15, 15, 15, 15, 15, 15, 26, 16,
-	26, 29, 26, 29, 17, 4, 4, 4, 4, 4,
-	4, 33, 33, 8, 33, 7, 16, 15, 15, 15,
-	25, 26, 30, 4, 4, 4, 20, 34, 17, 33,
-	34, 15, 25, 4, 9,
+	-8, -2, 20, 33, 11, 24, 29, 13, 23, 28,
+	-9, 15, 15, 15, 15, 15, 15, 15, 27, 16,
+	27, 30, 27, 30, 17, 4, 4, 4, 4, 4,
+	4, 34, 34, 7, 34, 7, 16, 15, 15, 15,
+	26, 27, 31, 4, 4, 4, 21, 35, 17, 34,
+	35, 15, 26, 4, 9,
 }
 
 var yyDef = [...]int{
@@ -224,7 +227,7 @@ var yyTok2 = [...]int{
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 	22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-	32, 33, 34,
+	32, 33, 34, 35,
 }
 
 var yyTok3 = [...]int{
@@ -570,55 +573,55 @@ yydefault:
 
 	case 12:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line par.y:138
+//line par.y:141
 		{
-			pauseAction()
+			actions.PauseAction()
 		}
 	case 13:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:140
+//line par.y:143
 		{
-			yyVAL.node = Node(yyDollar[1].token)
+			actions.GetFile(yyDollar[5].token)
 		}
 	case 14:
 		yyDollar = yyS[yypt-15 : yypt+1]
-//line par.y:142
+//line par.y:145
 		{
-			mkdiskAction(yyDollar[10].token)
+			actions.MkdiskCreateRoute(yyDollar[5].token, yyDollar[10].token, yyDollar[15].token)
 		}
 	case 15:
 		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:145
+//line par.y:148
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 16:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line par.y:147
+//line par.y:150
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 17:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:149
+//line par.y:152
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 18:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:152
+//line par.y:155
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 19:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:156
+//line par.y:159
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 20:
 		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:157
+//line par.y:160
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}

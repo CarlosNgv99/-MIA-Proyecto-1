@@ -7,6 +7,7 @@ import (
   "io"
   "bufio"
 	"os"
+	"MIA-P1/actions"
 )
 
 type node struct {
@@ -53,6 +54,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %token <token> idn 
 %token <token> id
 %token <token> less
+%token <token> mia_file
 %token <token> mount
 %token <token> mount_name
 %token <token> mbr
@@ -86,6 +88,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <token> idn 
 %type <token> id
 %type <token> less
+%type <token> mia_file
 %type <token> mount
 %type <token> mount_name
 %type <token> mbr
@@ -135,11 +138,11 @@ INSTRUCTION: MOUNT
 			| MKFS
 			| PAUSE;
 
-PAUSE: pause { pauseAction() };
+PAUSE: pause { actions.PauseAction() };
 
-EXEC: exec hyphen path arrow route {$$ = Node($1)};
+EXEC: exec hyphen path arrow route {actions.GetFile($5)};
 
-MKDISK: mkdisk hyphen size arrow digits hyphen path arrow quote route quote hyphen name arrow diskName {mkdiskAction($10)}
+MKDISK: mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName {actions.MkdiskCreateRoute($5, $10, $15)}
 ;
 
 MOUNT: mount hyphen path arrow route hyphen name arrow mount_name {$$ = Node($1)};
