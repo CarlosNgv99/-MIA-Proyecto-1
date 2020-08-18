@@ -66,6 +66,7 @@ unicodeLetter \x80
 	c = l.Rule0()
 
 [ \t\r\n]+
+unit  lval.token = string(l.TokenBytes(nil)); return unit  
 pause  lval.token = string(l.TokenBytes(nil)); return pause  
 exec  lval.token = string(l.TokenBytes(nil)); return exec  
 path  lval.token = string(l.TokenBytes(nil)); return path  
@@ -84,6 +85,7 @@ mkdisk  lval.token = string(l.TokenBytes(nil)); return mkdisk
 {diskName} lval.token = string(l.TokenBytes(nil)); return diskName
 {mia_file} lval.token = string(l.TokenBytes(nil)); return mia_file
 {route} lval.token = string(l.TokenBytes(nil)); return route
+
 
 
 

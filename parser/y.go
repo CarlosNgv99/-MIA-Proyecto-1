@@ -121,7 +121,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line par.y:164
+//line par.y:165
 
 // Run exported
 func Run() {
@@ -160,43 +160,43 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 64
+const yyLast = 68
 
 var yyAct = [...]int{
-	14, 60, 17, 57, 59, 44, 42, 41, 52, 12,
-	33, 31, 18, 15, 51, 32, 62, 19, 16, 30,
-	28, 50, 13, 56, 58, 34, 46, 29, 61, 49,
-	48, 47, 27, 26, 25, 24, 23, 22, 21, 64,
-	45, 43, 63, 55, 54, 53, 40, 39, 38, 37,
-	36, 35, 3, 1, 2, 20, 10, 9, 8, 7,
-	6, 5, 11, 4,
+	14, 60, 17, 57, 59, 44, 42, 41, 66, 12,
+	52, 33, 18, 15, 31, 51, 62, 19, 16, 32,
+	30, 28, 13, 50, 56, 68, 58, 34, 46, 29,
+	65, 61, 49, 48, 47, 27, 26, 25, 24, 23,
+	22, 21, 64, 45, 43, 67, 63, 55, 54, 53,
+	40, 39, 38, 37, 36, 35, 3, 1, 2, 20,
+	10, 9, 8, 7, 6, 5, 11, 4,
 }
 
 var yyPact = [...]int{
 	-11, -1000, -11, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, 23, 22, 21, 20, 19, 18, 17, -1000,
-	-1000, -7, 11, -8, -19, -12, -20, 8, 47, -1000,
-	46, 45, 44, 43, 42, -27, -28, 34, -29, 33,
-	10, 16, -1000, 15, -1000, -1000, 14, -5, -13, -23,
-	41, 40, 39, 2, -32, 7, -1000, -30, -1000, -34,
-	13, -10, 38, 30, -1000,
+	-1000, -1000, 26, 25, 24, 23, 22, 21, 20, -1000,
+	-1000, -6, 13, -7, -16, -8, -19, 10, 51, -1000,
+	50, 49, 48, 47, 46, -27, -28, 37, -29, 36,
+	12, 19, -1000, 18, -1000, -1000, 17, -3, -12, -21,
+	45, 44, 43, 3, -32, 9, -1000, -30, -1000, -34,
+	16, -10, 42, 33, 15, -24, 41, 8, -1000,
 }
 
 var yyPgo = [...]int{
-	0, 63, 62, 61, 60, 59, 58, 57, 56, 52,
-	54, 53,
+	0, 67, 66, 65, 64, 63, 62, 61, 60, 56,
+	58, 57,
 }
 
 var yyR1 = [...]int{
 	0, 11, 10, 10, 9, 9, 9, 9, 9, 9,
-	9, 9, 2, 4, 5, 1, 3, 7, 6, 8,
-	8,
+	9, 9, 2, 4, 5, 5, 1, 3, 7, 6,
+	8, 8,
 }
 
 var yyR2 = [...]int{
 	0, 1, 1, 2, 1, 1, 1, 1, 1, 1,
-	1, 1, 1, 5, 15, 9, 3, 5, 5, 5,
-	9,
+	1, 1, 1, 5, 15, 19, 9, 3, 5, 5,
+	5, 9,
 }
 
 var yyChk = [...]int{
@@ -206,17 +206,17 @@ var yyChk = [...]int{
 	27, 30, 27, 30, 17, 4, 4, 4, 4, 4,
 	4, 34, 34, 7, 34, 7, 16, 15, 15, 15,
 	26, 27, 31, 4, 4, 4, 21, 35, 17, 34,
-	35, 15, 26, 4, 9,
+	35, 15, 26, 4, 9, 15, 32, 4, 17,
 }
 
 var yyDef = [...]int{
 	0, -2, 1, 2, 4, 5, 6, 7, 8, 9,
 	10, 11, 0, 0, 0, 0, 0, 0, 0, 12,
-	3, 0, 0, 0, 0, 0, 0, 0, 0, 16,
+	3, 0, 0, 0, 0, 0, 0, 0, 0, 17,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 13, 0, 18, 17, 19, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 15, 0, 20, 0,
-	0, 0, 0, 0, 14,
+	0, 0, 13, 0, 19, 18, 20, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 16, 0, 21, 0,
+	0, 0, 0, 0, 14, 0, 0, 0, 15,
 }
 
 var yyTok1 = [...]int{
@@ -587,41 +587,47 @@ yydefault:
 		yyDollar = yyS[yypt-15 : yypt+1]
 //line par.y:145
 		{
-			actions.MkdiskCreateRoute(yyDollar[5].token, yyDollar[10].token, yyDollar[15].token)
+			actions.MkdiskCreateRoute(yyDollar[5].token, yyDollar[10].token, yyDollar[15].token, "")
 		}
 	case 15:
-		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:148
+		yyDollar = yyS[yypt-19 : yypt+1]
+//line par.y:146
 		{
-			yyVAL.node = Node(yyDollar[1].token)
+			actions.MkdiskCreateRoute(yyDollar[5].token, yyDollar[10].token, yyDollar[15].token, yyDollar[19].token)
 		}
 	case 16:
-		yyDollar = yyS[yypt-3 : yypt+1]
-//line par.y:150
+		yyDollar = yyS[yypt-9 : yypt+1]
+//line par.y:149
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 17:
-		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:152
+		yyDollar = yyS[yypt-3 : yypt+1]
+//line par.y:151
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 18:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:155
+//line par.y:153
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 19:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:159
+//line par.y:156
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 20:
-		yyDollar = yyS[yypt-9 : yypt+1]
+		yyDollar = yyS[yypt-5 : yypt+1]
 //line par.y:160
+		{
+			yyVAL.node = Node(yyDollar[1].token)
+		}
+	case 21:
+		yyDollar = yyS[yypt-9 : yypt+1]
+//line par.y:161
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}

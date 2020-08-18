@@ -1,26 +1,38 @@
 package actions
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strconv"
 )
 
 // MkdiskCreateRoute exported
-func MkdiskCreateRoute(sizeDigit string, route string, name string) {
-	i, _ := strconv.Atoi(sizeDigit)
-	fmt.Println(i)
+func MkdiskCreateRoute(sizeDigit string, route string, name string, unit string) {
+
+	i, _ := strconv.Atoi(sizeDigit) // int converted to string
 	err := os.Mkdir(route, 0777)
 	if err != nil {
-		createDisk(i, route, name)
+		createDisk(i, route, name, unit)
 	}
-	createDisk(i, route, name)
+	createDisk(i, route, name, unit)
 }
 
-func createDisk(sizeDigit int, route string, name string) {
-	size := int64(sizeDigit * 1024 * 1024)
-	fd, err := os.Create(route + name)
+func createDisk(sizeDigit int, route string, name string, unit string) {
+
+	var size int64
+
+	switch unit {
+	case "m":
+		size = int64(sizeDigit * 1024 * 1024)
+	case "k":
+		size = int64(sizeDigit * 1024)
+	default:
+		size = int64(sizeDigit * 1024 * 1024)
+	}
+
+	path := route + name
+
+	fd, err := os.Create(path)
 	if err != nil {
 		log.Fatal("Failed to create output")
 	}

@@ -17,5 +17,5 @@ func PauseAction() {
 func GetFile(route string) { // Gets file from route
 	re := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.mia`)
 	file := re.FindString(route)
-	fmt.Printf(file)
+	fmt.Println(file)
 }

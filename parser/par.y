@@ -142,7 +142,8 @@ PAUSE: pause { actions.PauseAction() };
 
 EXEC: exec hyphen path arrow route {actions.GetFile($5)};
 
-MKDISK: mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName {actions.MkdiskCreateRoute($5, $10, $15)}
+MKDISK: mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName {actions.MkdiskCreateRoute($5, $10, $15, "")}
+| mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName hyphen unit arrow id {actions.MkdiskCreateRoute($5, $10, $15, $19)}
 ;
 
 MOUNT: mount hyphen path arrow route hyphen name arrow mount_name {$$ = Node($1)};
