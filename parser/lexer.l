@@ -67,6 +67,8 @@ unicodeLetter \x80
 
 [ \t\r\n]+
 unit  lval.token = string(l.TokenBytes(nil)); return unit  
+add  lval.token = string(l.TokenBytes(nil)); return add  
+tpe  lval.token = string(l.TokenBytes(nil)); return tpe  
 pause  lval.token = string(l.TokenBytes(nil)); return pause  
 exec  lval.token = string(l.TokenBytes(nil)); return exec  
 path  lval.token = string(l.TokenBytes(nil)); return path  
@@ -77,6 +79,10 @@ arrow  lval.token = string(l.TokenBytes(nil)); return arrow
 name  lval.token = string(l.TokenBytes(nil)); return name  
 size  lval.token = string(l.TokenBytes(nil)); return size  
 mkdisk  lval.token = string(l.TokenBytes(nil)); return mkdisk  
+delete  lval.token = string(l.TokenBytes(nil)); return delete  
+rmdisk  lval.token = string(l.TokenBytes(nil)); return rmdisk  
+fit  lval.token = string(l.TokenBytes(nil)); return fit 
+fdisk  lval.token = string(l.TokenBytes(nil)); return fdisk  
 {id} lval.token = string(l.TokenBytes(nil)); return id 
 {hyphen} lval.token = string(l.TokenBytes(nil)); return hyphen
 {arrow} lval.token = string(l.TokenBytes(nil)); return arrow

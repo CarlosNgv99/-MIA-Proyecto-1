@@ -19,3 +19,8 @@ func GetFile(route string) { // Gets file from route
 	file := re.FindString(route)
 	fmt.Println(file)
 }
+
+// PrintParameter exported
+func PrintParameter(parameter string) {
+	fmt.Println("Parameter:", parameter)
+}

@@ -10,6 +10,9 @@ import (
 	"MIA-P1/actions"
 )
 
+var newDisk actions.Disk = actions.Disk{}
+
+
 type node struct {
   name string
   children []node
@@ -114,8 +117,12 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <node> UNMOUNT
 %type <node> EXEC
 %type <node> MKDISK
+%type <node> MKDISKO
+%type <node> MKDISKT
 %type <node> RMDISK
 %type <node> FDISK
+%type <node> FDISKO
+%type <node> FDISKT
 %type <node> MKFS
 %type <node> INSTRUCTION
 %type <node> INSTRUCTIONS
@@ -142,24 +149,53 @@ PAUSE: pause { actions.PauseAction() };
 
 EXEC: exec hyphen path arrow route {actions.GetFile($5)};
 
-MKDISK: mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName {actions.MkdiskCreateRoute($5, $10, $15, "")}
-| mkdisk hyphen size arrow digit hyphen path arrow quote route quote hyphen name arrow diskName hyphen unit arrow id {actions.MkdiskCreateRoute($5, $10, $15, $19)}
+MKDISK: mkdisk MKDISKO { 
+	newDisk.ShowDisk()
+	newDisk.CreateDisk()
+	newDisk = actions.Disk{}
+ }
+
+MKDISKO: MKDISKT 
+| MKDISKO MKDISKT EMPTY;
+
+MKDISKT: hyphen size arrow digit { newDisk.SetDiskSize($4) }
+| hyphen path arrow quote route quote { newDisk.SetDiskRoute($5) }
+| hyphen name arrow diskName { newDisk.SetDiskName($4) }
+| hyphen unit arrow id { newDisk.SetDiskUnit($4) }
 ;
+
+
 
 MOUNT: mount hyphen path arrow route hyphen name arrow mount_name {$$ = Node($1)};
 
 UNMOUNT: unmount hyphen idn {$$ = Node($1)};
 
-FDISK: fdisk hyphen size arrow digit {$$ = Node($1)}
+FDISK: fdisk FDISKO {$$ = Node($1)}
 ;
 
-RMDISK: rmdisk hyphen path arrow route {$$ = Node($1)};
+FDISKO: FDISKT 
+| FDISKO FDISKT EMPTY;
+
+FDISKT:	hyphen unit arrow id  { actions.PrintParameter($2) }
+| hyphen tpe arrow id { actions.PrintParameter($2) }
+| hyphen fit arrow id { actions.PrintParameter($2) }
+| hyphen delete { actions.PrintParameter($1) }
+| hyphen add { actions.PrintParameter($2) }
+| hyphen size arrow digit  { actions.PrintParameter($2) }
+| hyphen name arrow id { $$ = Node($1) }
+| hyphen path arrow quote route quote { actions.PrintParameter($2) }
+;
+
+
+RMDISK: rmdisk hyphen path arrow quote route quote {actions.RemoveDisk($5)};
 
 
 
 MKFS: mkfs hyphen id arrow idn {$$ = Node($1)}
 	| mkfs hyphen id arrow idn hyphen tpe arrow id {$$ = Node($1)}
 ;
+
+EMPTY: ;
 
 
 %% 
@@ -182,6 +218,13 @@ func Run() {
 		}
 	}
 
+}
+
+type disk struct {
+	size int64
+	path string
+	name string
+	unit string
 }
 
 func input(fi *bufio.Reader) (string, bool) {
