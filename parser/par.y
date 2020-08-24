@@ -11,7 +11,7 @@ import (
 )
 
 var newDisk actions.Disk = actions.Disk{}
-
+var _fdisk actions.FDisk = actions.FDisk{}
 
 type node struct {
   name string
@@ -150,7 +150,6 @@ PAUSE: pause { actions.PauseAction() };
 EXEC: exec hyphen path arrow route {actions.GetFile($5)};
 
 MKDISK: mkdisk MKDISKO { 
-	newDisk.ShowDisk()
 	newDisk.CreateDisk()
 	newDisk = actions.Disk{}
  }
@@ -187,7 +186,7 @@ FDISKT:	hyphen unit arrow id  { actions.PrintParameter($2) }
 ;
 
 
-RMDISK: rmdisk hyphen path arrow quote route quote {actions.RemoveDisk($5)};
+RMDISK: rmdisk hyphen path arrow quote route quote {actions.RemoveDisk($6)};
 
 
 
@@ -220,12 +219,6 @@ func Run() {
 
 }
 
-type disk struct {
-	size int64
-	path string
-	name string
-	unit string
-}
 
 func input(fi *bufio.Reader) (string, bool) {
 	s, err := fi.ReadString('\n')

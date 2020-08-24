@@ -17,6 +17,7 @@ import (
 )
 
 var newDisk actions.Disk = actions.Disk{}
+var _fdisk actions.FDisk = actions.FDisk{}
 
 type node struct {
 	name     string
@@ -123,7 +124,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line par.y:201
+//line par.y:200
 
 // Run exported
 func Run() {
@@ -143,13 +144,6 @@ func Run() {
 		}
 	}
 
-}
-
-type disk struct {
-	size int64
-	path string
-	name string
-	unit string
 }
 
 func input(fi *bufio.Reader) (string, bool) {
@@ -610,115 +604,114 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 //line par.y:152
 		{
-			newDisk.ShowDisk()
 			newDisk.CreateDisk()
 			newDisk = actions.Disk{}
 		}
 	case 17:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:161
+//line par.y:160
 		{
 			newDisk.SetDiskSize(yyDollar[4].token)
 		}
 	case 18:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line par.y:162
+//line par.y:161
 		{
 			newDisk.SetDiskRoute(yyDollar[5].token)
 		}
 	case 19:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:163
+//line par.y:162
 		{
 			newDisk.SetDiskName(yyDollar[4].token)
 		}
 	case 20:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:164
+//line par.y:163
 		{
 			newDisk.SetDiskUnit(yyDollar[4].token)
 		}
 	case 21:
 		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:169
+//line par.y:168
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 22:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line par.y:171
+//line par.y:170
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 23:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:173
+//line par.y:172
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 26:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:179
+//line par.y:178
 		{
 			actions.PrintParameter(yyDollar[2].token)
 		}
 	case 27:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:180
+//line par.y:179
 		{
 			actions.PrintParameter(yyDollar[2].token)
 		}
 	case 28:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:181
+//line par.y:180
 		{
 			actions.PrintParameter(yyDollar[2].token)
 		}
 	case 29:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:182
+//line par.y:181
 		{
 			actions.PrintParameter(yyDollar[1].token)
 		}
 	case 30:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:183
+//line par.y:182
 		{
 			actions.PrintParameter(yyDollar[2].token)
 		}
 	case 31:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:184
+//line par.y:183
 		{
 			actions.PrintParameter(yyDollar[2].token)
 		}
 	case 32:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:185
+//line par.y:184
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 33:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line par.y:186
+//line par.y:185
 		{
 			actions.PrintParameter(yyDollar[2].token)
 		}
 	case 34:
 		yyDollar = yyS[yypt-7 : yypt+1]
-//line par.y:190
+//line par.y:189
 		{
-			actions.RemoveDisk(yyDollar[5].token)
+			actions.RemoveDisk(yyDollar[6].token)
 		}
 	case 35:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:194
+//line par.y:193
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 36:
 		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:195
+//line par.y:194
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
