@@ -66,6 +66,7 @@ unicodeLetter \x80
 	c = l.Rule0()
 
 [ \t\r\n]+
+read  lval.token = string(l.TokenBytes(nil)); return read  
 unit  lval.token = string(l.TokenBytes(nil)); return unit  
 add  lval.token = string(l.TokenBytes(nil)); return add  
 tpe  lval.token = string(l.TokenBytes(nil)); return tpe  

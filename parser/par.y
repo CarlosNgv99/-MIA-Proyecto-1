@@ -11,7 +11,8 @@ import (
 )
 
 var newDisk actions.Disk = actions.Disk{}
-var _fdisk actions.FDisk = actions.FDisk{}
+var newPartition actions.Partition = actions.Partition{}
+var newFDisk actions.FDISK = actions.FDISK{}
 
 type node struct {
   name string
@@ -72,6 +73,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %token <token> tpe
 %token <token> unit
 %token <token> unmount
+%token <token> read
 %token <token> route
 %token <token> quote
 
@@ -106,6 +108,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <token> tpe
 %type <token> unit
 %type <token> unmount
+%type <token> read
 %type <token> route
 %type <token> quote
 
@@ -126,6 +129,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <node> MKFS
 %type <node> INSTRUCTION
 %type <node> INSTRUCTIONS
+%type <node> READ
 
 
 
@@ -143,9 +147,12 @@ INSTRUCTION: MOUNT
 			| RMDISK
 			| FDISK
 			| MKFS
-			| PAUSE;
+			| PAUSE
+			| READ;
 
 PAUSE: pause { actions.PauseAction() };
+
+READ: read arrow route { actions.ReadFile($3)}
 
 EXEC: exec hyphen path arrow route {actions.GetFile($5)};
 
@@ -169,7 +176,11 @@ MOUNT: mount hyphen path arrow route hyphen name arrow mount_name {$$ = Node($1)
 
 UNMOUNT: unmount hyphen idn {$$ = Node($1)};
 
-FDISK: fdisk FDISKO {$$ = Node($1)}
+FDISK: fdisk FDISKO {
+	newFDisk.CreatePartition()
+	newPartition = actions.Partition{}
+	newFDisk = actions.FDISK{}
+}
 ;
 
 FDISKO: FDISKT 
@@ -180,9 +191,9 @@ FDISKT:	hyphen unit arrow id  { actions.PrintParameter($2) }
 | hyphen fit arrow id { actions.PrintParameter($2) }
 | hyphen delete { actions.PrintParameter($1) }
 | hyphen add { actions.PrintParameter($2) }
-| hyphen size arrow digit  { actions.PrintParameter($2) }
-| hyphen name arrow id { $$ = Node($1) }
-| hyphen path arrow quote route quote { actions.PrintParameter($2) }
+| hyphen size arrow digit  { newFDisk.SetPartitionSize($4) }
+| hyphen name arrow id { newFDisk.SetPartitionName($4) }
+| hyphen path arrow quote route quote { newFDisk.SetPartitionRoute($5) }
 ;
 
 

@@ -23,6 +23,34 @@ type Disk struct {
 	Unit  string
 }
 
+// MBR exported
+type MBR struct {
+	Size       int64
+	Date       [20]byte
+	Signature  int64
+	Partitions [4]Partition
+}
+
+// Partition exported
+type Partition struct {
+	Status byte
+	Type   byte
+	Fit    byte
+	Start  int64
+	Size   int64
+	Name   [16]byte
+}
+
+// EBR exported
+type EBR struct {
+	Status byte
+	Fit    byte
+	Start  int64
+	Size   int64
+	Next   int64
+	name   [16]byte
+}
+
 // CreateDisk exported
 func (d *Disk) CreateDisk() {
 	if d.Name == "" {
@@ -113,7 +141,7 @@ func (d *Disk) setDisk() {
 		fmt.Println(">> Error writing file.")
 	}
 	writeMBR(fd, buffer.Bytes())
-	readFile(d.Route, d.Name)
+	//readFile(d.Route, d.Name)
 }
 
 func writeMBR(file *os.File, bytes []byte) {
@@ -123,14 +151,14 @@ func writeMBR(file *os.File, bytes []byte) {
 	}
 }
 
-func readFile(route string, name string) {
-	file, err := os.Open(route + name)
+// ReadFile exported
+func ReadFile(route string) {
+	file, err := os.Open(route)
+	defer file.Close()
 	if err != nil {
 		fmt.Println(">> Error reading the file. Try again.")
 	}
-
 	mbr := MBR{}
-
 	size := int(unsafe.Sizeof(mbr))
 	data := readBytes(file, size)
 	buff := bytes.NewBuffer(data)
@@ -140,11 +168,17 @@ func readFile(route string, name string) {
 	fmt.Println("MBR SIZE:", binary.Size(mbr), "bytes") // Binary.size does not reads structs with slices, use unsafe.sizeof instead
 	fmt.Println("CREATED AT:", date)
 	fmt.Println("SIGNATURE", (mbr.Signature))
+
 	for i := 0; i < 4; i++ {
 		status := mbr.Partitions[i].Status
-		fmt.Println("Partition ", i, " Status: ", string(status))
+		fmt.Println("Partition ", i)
+		fmt.Println("Status: ", string(status))
+		fmt.Println("Name:", string(mbr.Partitions[i].Name[:]))
+		fmt.Println("Size:", mbr.Partitions[i].Size, "bytes")
+		fmt.Println("Start:", mbr.Partitions[i].Start)
+		fmt.Println("Fit:", string(mbr.Partitions[i].Fit))
+		fmt.Println()
 	}
-
 }
 
 func readBytes(file *os.File, size int) []byte {
@@ -193,10 +227,48 @@ func SetUnit(unit string, sizeU int) int64 {
 	return size
 }
 
-// FDISK
+// PARTITIONS
 
-// FDisk exported
-type FDisk struct {
+// FDISK exported
+type FDISK struct {
+	Route  string
+	Status byte
+	Type   byte
+	Fit    byte
+	Start  int64
+	Size   int64
+	Unit   string
+	Name   [16]byte
+}
+
+// CreatePartition exported
+func (f *FDISK) CreatePartition() {
+	if len(f.Name) == 0 {
+		fmt.Println(">> Partition name is missing. Try again.")
+	} else if f.Route == "" {
+		fmt.Println(">> Partition path is missing. Try again.")
+	} else if f.Size == 0 {
+		fmt.Println(">> Partition size is missing. Try again.")
+	} else {
+		f.getDisk(f.Route)
+	}
+}
+
+// SetPartitionName exported
+func (f *FDISK) SetPartitionName(extName string) {
+	copy(f.Name[:], extName)
+}
+
+// SetPartitionRoute exported
+func (f *FDISK) SetPartitionRoute(extRoute string) {
+	f.Route = extRoute
+}
+
+// SetPartitionSize exported
+func (f *FDISK) SetPartitionSize(extSize string) {
+	i, _ := strconv.Atoi(extSize)
+	size := setPartitionUnit(f.Unit, i)
+	f.Size = size
 }
 
 func setPartitionUnit(unit string, sizeU int) int64 {
@@ -216,36 +288,81 @@ func setPartitionUnit(unit string, sizeU int) int64 {
 	return size
 }
 
-// MBR exported
-type MBR struct {
-	Size       int64
-	Date       [20]byte
-	Signature  int64
-	Partitions [4]Partition
+func (f *FDISK) getDisk(route string) {
+	file, err := os.OpenFile(route, os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Println(">> Error reading the file. Try again.")
+	}
+	// Verifying and deploying disk information
+	mbr := MBR{}
+	size := int(unsafe.Sizeof(mbr))
+	data := readBytes(file, size)
+	buff := bytes.NewBuffer(data)
+	binary.Read(buff, binary.BigEndian, &mbr)
+	date := string(mbr.Date[:])
+	fmt.Println("DISK SIZE:", mbr.Size, "bytes")
+	fmt.Println("MBR SIZE:", binary.Size(mbr), "bytes")
+	fmt.Println("CREATED AT:", date)
+	fmt.Println("SIGNATURE", (mbr.Signature))
+	for i := 0; i < 4; i++ {
+		status := mbr.Partitions[i].Status
+		fmt.Println("Partition ", i, " Status: ", string(status))
+	}
+
+	// Creating partition
+	var buffer bytes.Buffer
+	var mbrBuffer bytes.Buffer
+
+	file.Seek(0, 0) // Positioning at the beginning of the file
+	for i := 0; i < 4; i++ {
+		if mbr.Partitions[i].Status == 'F' {
+			mbr.Partitions[i].Size = f.Size
+			mbr.Partitions[i].Status = 'T'
+			mbr.Partitions[i].Fit = 'B'
+			mbr.Partitions[i].Name = f.Name
+			mbr.Partitions[i].Start = mbr.Size + 1
+			if i == 0 {
+				file.Seek(mbr.Partitions[i].Start, 0)
+				binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
+				file.Write(buffer.Bytes())
+				mbr.Size = mbr.Size - mbr.Partitions[i].Size
+				break
+			}
+		}
+	}
+
+	//newMbr := &mbr
+	//rewriteMbr(file, newMbr)
+
+	file.Seek(0, 0)
+	binary.Write(&mbrBuffer, binary.BigEndian, &mbr)
+	_, er := file.Write(mbrBuffer.Bytes())
+
+	if er != nil {
+		fmt.Println(er)
+	}
+
+	fmt.Println()
+	fmt.Println("-------FILE MODIFIED--------")
+	fmt.Println("DISK SIZE:", mbr.Size, "bytes")
+	fmt.Println("MBR SIZE:", binary.Size(mbr), "bytes")
+	fmt.Println("CREATED AT:", date)
+	fmt.Println("SIGNATURE", (mbr.Signature))
+	for i := 0; i < 4; i++ {
+		fmt.Println("------ Partition ", i, "------")
+		fmt.Println("Status:", string(mbr.Partitions[i].Status))
+		fmt.Println("Name:", string(mbr.Partitions[i].Name[:]))
+		fmt.Println("Size:", mbr.Partitions[i].Size, "bytes")
+		fmt.Println("Start:", mbr.Partitions[i].Start)
+		fmt.Println("Fit:", string(mbr.Partitions[i].Fit))
+	}
+	file.Close()
 }
 
-// Partition exported
-type Partition struct {
-	Status byte
-	Type   byte
-	Fit    byte
-	Start  int64
-	Size   int64
-	Name   [16]byte
-}
-
-// EBR exported
-type EBR struct {
-	Status byte
-	Fit    byte
-	Start  int64
-	Size   int64
-	Next   int64
-	name   [16]byte
-}
-
-func (m *MBR) setMBR(size int64) MBR {
-	m.Size = size
-	m.Signature = rand.Int63()
-	return *m
+func rewriteMbr(file *os.File, mbr *MBR) {
+	auxMbr := &mbr
+	var buffer bytes.Buffer
+	file.Seek(0, 0)
+	binary.Write(&buffer, binary.BigEndian, auxMbr)
+	file.Write(buffer.Bytes())
 }
