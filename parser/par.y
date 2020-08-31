@@ -116,6 +116,8 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 
 // Non terminals
 %type <node> MOUNT
+%type <node> MOUNTO
+%type <node> MOUNTT
 %type <node> PAUSE
 %type <node> UNMOUNT
 %type <node> EXEC
@@ -148,7 +150,8 @@ INSTRUCTION: MOUNT
 			| FDISK
 			| MKFS
 			| PAUSE
-			| READ;
+			| READ
+			;
 
 PAUSE: pause { actions.PauseAction() };
 
@@ -172,7 +175,13 @@ MKDISKT: hyphen size arrow digit { newDisk.SetDiskSize($4) }
 
 
 
-MOUNT: mount hyphen path arrow route hyphen name arrow mount_name {$$ = Node($1)};
+MOUNT: mount MOUNTO { $$ = Node($1) };
+
+MOUNTO: MOUNTT
+	|	MOUNTO MOUNTT EMPTY;
+
+MOUNTT: hyphen path arrow route { actions.PrintParameter($4) }
+	|	hyphen name arrow id { actions.PrintParameter($4) };
 
 UNMOUNT: unmount hyphen idn {$$ = Node($1)};
 
@@ -186,12 +195,12 @@ FDISK: fdisk FDISKO {
 FDISKO: FDISKT 
 | FDISKO FDISKT EMPTY;
 
-FDISKT:	hyphen unit arrow id  { actions.PrintParameter($2) }
-| hyphen tpe arrow id { actions.PrintParameter($2) }
-| hyphen fit arrow id { actions.PrintParameter($2) }
-| hyphen delete { actions.PrintParameter($1) }
+FDISKT:	hyphen unit arrow id  { newFDisk.SetFUnit($4) }
+| hyphen tpe arrow id { newFDisk.SetPartitionType($4) }
+| hyphen fit arrow id { newFDisk.SetPartitionFit($4) }
+| hyphen delete arrow id { newFDisk.SetDeleteOption($4) }
 | hyphen add { actions.PrintParameter($2) }
-| hyphen size arrow digit  { newFDisk.SetPartitionSize($4) }
+| hyphen size arrow digit  { newFDisk.SetPSize($4) }
 | hyphen name arrow id { newFDisk.SetPartitionName($4) }
 | hyphen path arrow quote route quote { newFDisk.SetPartitionRoute($5) }
 ;

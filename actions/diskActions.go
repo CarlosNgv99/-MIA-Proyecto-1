@@ -7,8 +7,10 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 	"unsafe"
 )
@@ -148,6 +150,8 @@ func writeMBR(file *os.File, bytes []byte) {
 	_, err := file.Write(bytes)
 	if err != nil {
 		fmt.Println(">> Error writing file. Try again.")
+	} else {
+		fmt.Println(">> Disk successfully created!")
 	}
 }
 
@@ -177,8 +181,11 @@ func ReadFile(route string) {
 		fmt.Println("Size:", mbr.Partitions[i].Size, "bytes")
 		fmt.Println("Start:", mbr.Partitions[i].Start)
 		fmt.Println("Fit:", string(mbr.Partitions[i].Fit))
+		fmt.Println("Type:", string(mbr.Partitions[i].Type))
+
 		fmt.Println()
 	}
+	//mbrGraph(mbr)
 }
 
 func readBytes(file *os.File, size int) []byte {
@@ -218,7 +225,11 @@ func SetUnit(unit string, sizeU int) int64 {
 	switch unit {
 	case "m":
 		size = int64(sizeU * 1024 * 1024)
+	case "M":
+		size = int64(sizeU * 1024 * 1024)
 	case "k":
+		size = int64(sizeU * 1024)
+	case "K":
 		size = int64(sizeU * 1024)
 	default:
 		size = int64(sizeU * 1024 * 1024)
@@ -239,19 +250,32 @@ type FDISK struct {
 	Size   int64
 	Unit   string
 	Name   [16]byte
+	Delete string
 }
 
 // CreatePartition exported
 func (f *FDISK) CreatePartition() {
+
+	if f.Fit == 0 {
+		f.Fit = byte('W')
+	}
+	if f.Type == 0 {
+		f.Type = byte('P')
+	}
+
 	if len(f.Name) == 0 {
 		fmt.Println(">> Partition name is missing. Try again.")
 	} else if f.Route == "" {
 		fmt.Println(">> Partition path is missing. Try again.")
-	} else if f.Size == 0 {
-		fmt.Println(">> Partition size is missing. Try again.")
 	} else {
-		f.getDisk(f.Route)
+		if len(f.Delete) == 0 {
+			f.SetPartitionSize()
+			f.getDisk(f.Route)
+		} else {
+			f.deletePartition()
+		}
 	}
+
 }
 
 // SetPartitionName exported
@@ -264,31 +288,80 @@ func (f *FDISK) SetPartitionRoute(extRoute string) {
 	f.Route = extRoute
 }
 
-// SetPartitionSize exported
-func (f *FDISK) SetPartitionSize(extSize string) {
+// SetPSize exported
+func (f *FDISK) SetPSize(extSize string) {
 	i, _ := strconv.Atoi(extSize)
-	size := setPartitionUnit(f.Unit, i)
-	f.Size = size
+	f.Size = int64(i)
 }
 
-func setPartitionUnit(unit string, sizeU int) int64 {
-	var size int64
+// SetPartitionSize exported
+func (f *FDISK) SetPartitionSize() {
+	f.Size = f.SetPartitionUnit(f.Size)
+}
 
-	switch unit {
+// SetPartitionFit exported
+func (f *FDISK) SetPartitionFit(extFit string) {
+	strings.ToUpper(extFit)
+	switch extFit {
+	case "BF":
+		f.Fit = byte('B')
+	case "WF":
+		f.Fit = byte('W')
+	case "FF":
+		f.Fit = byte('F')
+	default:
+		fmt.Println(">> Please, enter a valid option.")
+	}
+}
+
+// SetPartitionType exported
+func (f *FDISK) SetPartitionType(extType string) {
+	switch extType {
+	case "P":
+		f.Type = byte('P')
+	case "E":
+		f.Type = byte('E')
+	case "L":
+		f.Type = byte('L')
+	default:
+		fmt.Println(">> Please, enter a valid option.")
+	}
+}
+
+// SetFUnit exported
+func (f *FDISK) SetFUnit(unit string) {
+	f.Unit = unit
+}
+
+// SetDeleteOption exported
+func (f *FDISK) SetDeleteOption(option string) {
+	f.Delete = option
+}
+
+// SetPartitionUnit exported
+func (f *FDISK) SetPartitionUnit(sizeU int64) int64 {
+	var size int64
+	switch f.Unit {
 	case "m": // Megabytes
+		size = int64(sizeU * 1024 * 1024)
+	case "M": // Megabytes
 		size = int64(sizeU * 1024 * 1024)
 	case "k": // Kilobytes
 		size = int64(sizeU * 1024)
+	case "K": // Kilobytes
+		size = int64(sizeU * 1024)
 	case "b": // Bytes
+		size = int64(sizeU)
+	case "B": // Bytes
 		size = int64(sizeU)
 	default: // Kilobytes
 		size = int64(sizeU * 1024)
 	}
-
 	return size
 }
 
 func (f *FDISK) getDisk(route string) {
+	extendedpFound := false
 	file, err := os.OpenFile(route, os.O_RDWR, 0644)
 	if err != nil {
 		fmt.Println(">> Error reading the file. Try again.")
@@ -297,72 +370,162 @@ func (f *FDISK) getDisk(route string) {
 	mbr := MBR{}
 	size := int(unsafe.Sizeof(mbr))
 	data := readBytes(file, size)
+	// Reading bytes to mbr
 	buff := bytes.NewBuffer(data)
 	binary.Read(buff, binary.BigEndian, &mbr)
-	date := string(mbr.Date[:])
-	fmt.Println("DISK SIZE:", mbr.Size, "bytes")
-	fmt.Println("MBR SIZE:", binary.Size(mbr), "bytes")
-	fmt.Println("CREATED AT:", date)
-	fmt.Println("SIGNATURE", (mbr.Signature))
-	for i := 0; i < 4; i++ {
-		status := mbr.Partitions[i].Status
-		fmt.Println("Partition ", i, " Status: ", string(status))
-	}
-
 	// Creating partition
 	var buffer bytes.Buffer
-	var mbrBuffer bytes.Buffer
-
 	file.Seek(0, 0) // Positioning at the beginning of the file
+
+	// Verifying if there's a extended partition
+	for i := 0; i < 4; i++ {
+		if mbr.Partitions[i].Type == 'E' {
+			extendedpFound = true
+		}
+	}
+
+	if extendedpFound && (f.Type == 'E' || f.Type == 'b') {
+		fmt.Println(">> There's already an extended partition. Please try again.")
+		return
+	}
+
 	for i := 0; i < 4; i++ {
 		if mbr.Partitions[i].Status == 'F' {
 			mbr.Partitions[i].Size = f.Size
 			mbr.Partitions[i].Status = 'T'
-			mbr.Partitions[i].Fit = 'B'
-			mbr.Partitions[i].Name = f.Name
-			mbr.Partitions[i].Start = mbr.Size + 1
-			if i == 0 {
-				file.Seek(mbr.Partitions[i].Start, 0)
-				binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
-				file.Write(buffer.Bytes())
-				mbr.Size = mbr.Size - mbr.Partitions[i].Size
-				break
+			if f.Fit == ' ' {
+				mbr.Partitions[i].Fit = 'W'
+			} else {
+				mbr.Partitions[i].Fit = f.Fit
 			}
+			if f.Fit == ' ' {
+				mbr.Partitions[i].Type = 'P'
+			} else {
+				mbr.Partitions[i].Type = f.Type
+			}
+			mbr.Partitions[i].Name = f.Name
+			mbr.Partitions[i].Type = f.Type
+			if i == 0 {
+				mbr.Partitions[i].Start = int64(binary.Size(mbr)) + 1
+				file.Seek(mbr.Partitions[i].Start, 0)
+			} else {
+				mbr.Partitions[i].Start = int64(mbr.Partitions[i-1].Size + 1)
+				file.Seek(mbr.Partitions[i].Start, 0)
+			}
+			binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
+			file.Write(buffer.Bytes())
+			mbr.Size = mbr.Size - mbr.Partitions[i].Size // Disk size after adding partition. MBR size always stays de same.
+			break
 		}
 	}
-
-	//newMbr := &mbr
-	//rewriteMbr(file, newMbr)
-
+	// Rewriting MBR
+	var mbrBuffer bytes.Buffer
 	file.Seek(0, 0)
 	binary.Write(&mbrBuffer, binary.BigEndian, &mbr)
 	_, er := file.Write(mbrBuffer.Bytes())
-
 	if er != nil {
-		fmt.Println(er)
+		fmt.Println(">>", er)
+	} else {
+		fmt.Println(">> Partition created.")
 	}
 
-	fmt.Println()
-	fmt.Println("-------FILE MODIFIED--------")
-	fmt.Println("DISK SIZE:", mbr.Size, "bytes")
-	fmt.Println("MBR SIZE:", binary.Size(mbr), "bytes")
-	fmt.Println("CREATED AT:", date)
-	fmt.Println("SIGNATURE", (mbr.Signature))
-	for i := 0; i < 4; i++ {
-		fmt.Println("------ Partition ", i, "------")
-		fmt.Println("Status:", string(mbr.Partitions[i].Status))
-		fmt.Println("Name:", string(mbr.Partitions[i].Name[:]))
-		fmt.Println("Size:", mbr.Partitions[i].Size, "bytes")
-		fmt.Println("Start:", mbr.Partitions[i].Start)
-		fmt.Println("Fit:", string(mbr.Partitions[i].Fit))
-	}
 	file.Close()
 }
 
-func rewriteMbr(file *os.File, mbr *MBR) {
-	auxMbr := &mbr
-	var buffer bytes.Buffer
+func (f *FDISK) deletePartition() {
+	file, err := os.OpenFile(f.Route, os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Println(">> Error reading the file. Try again.")
+	}
+	mbr := MBR{}
+	size := int(unsafe.Sizeof(mbr))
+	data := readBytes(file, size)
+	// Reading bytes to mbr
+	buff := bytes.NewBuffer(data)
+	binary.Read(buff, binary.BigEndian, &mbr)
 	file.Seek(0, 0)
-	binary.Write(&buffer, binary.BigEndian, auxMbr)
-	file.Write(buffer.Bytes())
+
+	for i := 0; i < 4; i++ {
+		if mbr.Partitions[i].Name == f.Name {
+			if f.Delete == "full" {
+				file.Seek(mbr.Partitions[i].Size, 0)
+				size := mbr.Partitions[i].Size
+				array := make([]byte, size)
+				for j := 0; j < (int(size) - 1); j++ {
+					array[i] = 0
+				}
+				_, err = file.Write(array)
+				if err != nil {
+					log.Fatal(">> Write failed")
+				}
+
+			} else if f.Delete == "fast" {
+				mbr.Partitions[i].Status = 'F'
+				mbr.Partitions[i].Start = -1
+				mbr.Partitions[i].Name = [16]byte{0}
+				mbr.Partitions[i].Fit = ' '
+				mbr.Partitions[i].Type = ' '
+				mbr.Partitions[i].Size = 0
+			}
+		}
+	}
+	var mbrBuffer bytes.Buffer
+	file.Seek(0, 0)
+	binary.Write(&mbrBuffer, binary.BigEndian, &mbr)
+	_, er := file.Write(mbrBuffer.Bytes())
+	if er != nil {
+		fmt.Println(">>", er)
+	} else {
+		fmt.Println(">> Partition removed.")
+	}
+}
+
+func mbrGraph(mbr MBR) {
+	cont := 4
+	f, err := os.Create("mbr.txt")
+	defer f.Close()
+	if err != nil {
+		fmt.Println(">> Error drawing graph!")
+	}
+
+	f.WriteString("digraph H { \n node [shape=plaintext];\n")
+	f.WriteString(" B [ label=< <TABLE BORDER =\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n")
+	f.WriteString("<TR PORT=\"header\">")
+	f.WriteString("<TD COLSPAN=\"2\">MBR</TD>")
+	f.WriteString("</TR>\n")
+	f.WriteString("<TR><TD>Name</TD><TD>Value</TD></TR>\n")
+	f.WriteString("<TR><TD PORT=\"1\">MBR_SIZE</TD><TD> " + strconv.Itoa(int(mbr.Size)) + " bytes</TD></TR>\n")
+	f.WriteString("<TR><TD PORT=\"2\">MBR_CREATED_AT</TD><TD>  " + string(mbr.Date[:19]) + "</TD></TR>\n")
+	f.WriteString("<TR><TD PORT=\"3\">MBR_SIGNATURE</TD><TD> " + strconv.Itoa(int(mbr.Signature)) + "</TD></TR>\n")
+
+	for i := 0; i < 4; i++ {
+		status := mbr.Partitions[i].Status
+		tpe := mbr.Partitions[i].Type
+		fit := mbr.Partitions[i].Fit
+		name := (mbr.Partitions[i].Name[:16])
+		size := mbr.Partitions[i].Size
+
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION</TD><TD>" + strconv.Itoa(i) + "</TD></TR>\n")
+		cont++
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_NAME</TD><TD>" + string(name) + "</TD></TR>\n")
+		cont++
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_SIZE</TD><TD>" + strconv.Itoa(int(size)) + "</TD></TR>\n")
+		cont++
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_STATUS</TD><TD>" + string(status) + "</TD></TR>\n")
+		cont++
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_TYPE</TD><TD>" + string(tpe) + "</TD></TR>\n")
+		cont++
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_FIT</TD><TD>" + string(fit) + "</TD></TR>\n")
+		cont++
+		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_START</TD><TD>" + strconv.Itoa(int(mbr.Partitions[i].Start)) + "</TD></TR>\n")
+		cont++
+	}
+
+	f.WriteString("</TABLE> >];\n")
+	f.WriteString("}")
+
+	e := exec.Command("dot", "-Tpng", "mbr.txt", "-o mbr.png")
+	if er := e.Run(); er != nil {
+		fmt.Println(">> Error", er)
+	}
 }

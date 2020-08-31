@@ -9,7 +9,7 @@ import (
 
 // PauseAction exported
 func PauseAction() {
-	fmt.Println("Press any key to continue.")
+	fmt.Println(">> Press any key to continue.")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
 
@@ -22,5 +22,5 @@ func GetFile(route string) { // Gets file from route
 
 // PrintParameter exported
 func PrintParameter(parameter string) {
-	fmt.Println("Parameter:", parameter)
+	fmt.Println(">> Parameter:", parameter)
 }
