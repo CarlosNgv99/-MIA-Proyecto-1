@@ -141,6 +141,7 @@ func (d *Disk) setDisk() {
 	er := binary.Write(&buffer, binary.BigEndian, mbr)
 	if er != nil {
 		fmt.Println(">> Error writing file.")
+		return
 	}
 	writeMBR(fd, buffer.Bytes())
 	//readFile(d.Route, d.Name)
@@ -161,6 +162,7 @@ func ReadFile(route string) {
 	defer file.Close()
 	if err != nil {
 		fmt.Println(">> Error reading the file. Try again.")
+		return
 	}
 	mbr := MBR{}
 	size := int(unsafe.Sizeof(mbr))
@@ -168,20 +170,21 @@ func ReadFile(route string) {
 	buff := bytes.NewBuffer(data)
 	_ = binary.Read(buff, binary.BigEndian, &mbr)
 	date := string(mbr.Date[:])
-	fmt.Println("DISK SIZE:", mbr.Size, "bytes")
-	fmt.Println("MBR SIZE:", binary.Size(mbr), "bytes") // Binary.size does not reads structs with slices, use unsafe.sizeof instead
-	fmt.Println("CREATED AT:", date)
-	fmt.Println("SIGNATURE", (mbr.Signature))
-
+	fmt.Println(">> ****** MBR INFORMATION ****** ")
+	fmt.Println("      DISK SIZE:", mbr.Size, "bytes")
+	fmt.Println("      MBR SIZE:", binary.Size(mbr), "bytes") // Binary.size does not reads structs with slices, use unsafe.sizeof instead
+	fmt.Println("      CREATED AT:", date)
+	fmt.Println("      SIGNATURE", (mbr.Signature))
+	fmt.Println()
 	for i := 0; i < 4; i++ {
 		status := mbr.Partitions[i].Status
-		fmt.Println("Partition ", i)
-		fmt.Println("Status: ", string(status))
-		fmt.Println("Name:", string(mbr.Partitions[i].Name[:]))
-		fmt.Println("Size:", mbr.Partitions[i].Size, "bytes")
-		fmt.Println("Start:", mbr.Partitions[i].Start)
-		fmt.Println("Fit:", string(mbr.Partitions[i].Fit))
-		fmt.Println("Type:", string(mbr.Partitions[i].Type))
+		fmt.Println("     *Partition", i)
+		fmt.Println("      Status: ", string(status))
+		fmt.Println("      Name:", string(mbr.Partitions[i].Name[:]))
+		fmt.Println("      Size:", mbr.Partitions[i].Size, "bytes")
+		fmt.Println("      Start:", mbr.Partitions[i].Start)
+		fmt.Println("      Fit:", string(mbr.Partitions[i].Fit))
+		fmt.Println("      Type:", string(mbr.Partitions[i].Type))
 
 		fmt.Println()
 	}
@@ -190,10 +193,7 @@ func ReadFile(route string) {
 
 func readBytes(file *os.File, size int) []byte {
 	bytes := make([]byte, size)
-	_, err := file.Read(bytes)
-	if err != nil {
-		fmt.Println(">> Error reading the file. Try again.")
-	}
+	file.Read(bytes)
 	return bytes
 }
 
@@ -412,6 +412,7 @@ func (f *FDISK) getDisk(route string) {
 				mbr.Partitions[i].Start = int64(mbr.Partitions[i-1].Size + 1)
 				file.Seek(mbr.Partitions[i].Start, 0)
 			}
+
 			binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
 			file.Write(buffer.Bytes())
 			mbr.Size = mbr.Size - mbr.Partitions[i].Size // Disk size after adding partition. MBR size always stays de same.
@@ -448,16 +449,22 @@ func (f *FDISK) deletePartition() {
 	for i := 0; i < 4; i++ {
 		if mbr.Partitions[i].Name == f.Name {
 			if f.Delete == "full" {
-				file.Seek(mbr.Partitions[i].Size, 0)
+				file.Seek(mbr.Partitions[i].Start, 0)
 				size := mbr.Partitions[i].Size
 				array := make([]byte, size)
 				for j := 0; j < (int(size) - 1); j++ {
-					array[i] = 0
+					array[j] = 0
 				}
 				_, err = file.Write(array)
 				if err != nil {
 					log.Fatal(">> Write failed")
 				}
+				mbr.Partitions[i].Status = 'F'
+				mbr.Partitions[i].Start = -1
+				mbr.Partitions[i].Name = [16]byte{0}
+				mbr.Partitions[i].Fit = ' '
+				mbr.Partitions[i].Type = ' '
+				mbr.Partitions[i].Size = 0
 
 			} else if f.Delete == "fast" {
 				mbr.Partitions[i].Status = 'F'
