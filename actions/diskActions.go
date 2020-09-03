@@ -50,7 +50,7 @@ type EBR struct {
 	Start  int64
 	Size   int64
 	Next   int64
-	name   [16]byte
+	Name   [16]byte
 }
 
 // CreateDisk exported
@@ -185,7 +185,47 @@ func ReadFile(route string) {
 		fmt.Println("      Start:", mbr.Partitions[i].Start)
 		fmt.Println("      Fit:", string(mbr.Partitions[i].Fit))
 		fmt.Println("      Type:", string(mbr.Partitions[i].Type))
+		if mbr.Partitions[i].Type == 'E' {
+			file.Seek(mbr.Partitions[i].Start, 0)
+			ebr := EBR{}
+			sizeEbr := binary.Size(ebr)
+			dataEbr := readBytes(file, sizeEbr)
+			ebrBuff := bytes.NewBuffer(dataEbr)
+			_ = binary.Read(ebrBuff, binary.BigEndian, &ebr)
+			fmt.Println(" *Logical ", i)
+			fmt.Println("  Next:", ebr.Next)
+			fmt.Println("  Nombre " + string(ebr.Name[:]))
+			fmt.Println("  Size ", ebr.Size)
+			fmt.Println("  Start:", ebr.Start)
 
+			i := 1
+			if ebr.Next != -1 {
+				for ebr.Next != -1 {
+					// Iterates ebrs until found the last one
+
+					file.Seek(ebr.Next, 0)
+
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					binary.Read(bufferAux, binary.BigEndian, &ebr)
+					fmt.Println(" *Logical ", i)
+					fmt.Println("  Next:", ebr.Next)
+					fmt.Println("  Nombre " + string(ebr.Name[:]))
+					fmt.Println("  Size ", ebr.Size)
+					fmt.Println("  Start:", ebr.Start)
+					i++
+					if i == 24 {
+						fmt.Println(">> You have created the maximum logical partitions available.")
+						return
+					}
+				}
+			}
+
+			/*fmt.Println("      NAME EBR:", string(ebr.Name[:]))
+			fmt.Println("      NEXT EBR:", (ebr.Next))
+			fmt.Println("      START EBR:", (ebr.Start))*/
+
+		}
 		fmt.Println()
 	}
 	//mbrGraph(mbr)
@@ -323,6 +363,12 @@ func (f *FDISK) SetPartitionType(extType string) {
 		f.Type = byte('E')
 	case "L":
 		f.Type = byte('L')
+	case "p":
+		f.Type = byte('P')
+	case "e":
+		f.Type = byte('E')
+	case "l":
+		f.Type = byte('L')
 	default:
 		fmt.Println(">> Please, enter a valid option.")
 	}
@@ -366,6 +412,7 @@ func (f *FDISK) getDisk(route string) {
 	if err != nil {
 		fmt.Println(">> Error reading the file. Try again.")
 	}
+	defer file.Close()
 	// Verifying and deploying disk information
 	mbr := MBR{}
 	size := int(unsafe.Sizeof(mbr))
@@ -379,44 +426,173 @@ func (f *FDISK) getDisk(route string) {
 
 	// Verifying if there's a extended partition
 	for i := 0; i < 4; i++ {
-		if mbr.Partitions[i].Type == 'E' {
+		if mbr.Partitions[i].Type == byte('E') {
 			extendedpFound = true
 		}
 	}
 
-	if extendedpFound && (f.Type == 'E' || f.Type == 'b') {
+	if extendedpFound == true && (f.Type == byte('E') || f.Type == byte('e')) {
 		fmt.Println(">> There's already an extended partition. Please try again.")
 		return
 	}
 
-	for i := 0; i < 4; i++ {
-		if mbr.Partitions[i].Status == 'F' {
-			mbr.Partitions[i].Size = f.Size
-			mbr.Partitions[i].Status = 'T'
-			if f.Fit == ' ' {
-				mbr.Partitions[i].Fit = 'W'
-			} else {
-				mbr.Partitions[i].Fit = f.Fit
-			}
-			if f.Fit == ' ' {
-				mbr.Partitions[i].Type = 'P'
-			} else {
-				mbr.Partitions[i].Type = f.Type
-			}
-			mbr.Partitions[i].Name = f.Name
-			mbr.Partitions[i].Type = f.Type
-			if i == 0 {
-				mbr.Partitions[i].Start = int64(binary.Size(mbr)) + 1
+	if f.Type == byte('l') || f.Type == byte('L') {
+		for i := 0; i < 4; i++ {
+			if mbr.Partitions[i].Type == byte('E') {
+				if f.Size > mbr.Partitions[i].Size {
+					fmt.Println(">> Logic partition size is bigger than extended partition. Try again.")
+					return
+				}
+				// NEW EBR
+				ebr := EBR{}
+				ebr.Name = f.Name
+				ebr.Size = f.Size
+				ebr.Fit = f.Fit
+				ebr.Status = 'T'
+				ebr.Next = -1
+				mbr.Partitions[i].Size = mbr.Partitions[i].Size - ebr.Size
+				// Searching for ebr in extended partition
 				file.Seek(mbr.Partitions[i].Start, 0)
-			} else {
-				mbr.Partitions[i].Start = int64(mbr.Partitions[i-1].Size + 1)
-				file.Seek(mbr.Partitions[i].Start, 0)
-			}
 
-			binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
-			file.Write(buffer.Bytes())
-			mbr.Size = mbr.Size - mbr.Partitions[i].Size // Disk size after adding partition. MBR size always stays de same.
-			break
+				if mbr.Partitions[i].Size < 0 {
+					fmt.Println(">> There's not enough space within this partition.")
+				}
+
+				i := 0
+				ebrAux := EBR{}
+				sizeEbr := binary.Size(ebrAux)
+				ebrData := readBytes(file, sizeEbr)
+				bufferAux := bytes.NewBuffer(ebrData)
+				_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+				if ebrAux.Status == byte('F') {
+					// Writes on the first ebr created when extended partition was.
+					ebrAux.Name = f.Name
+					ebrAux.Size = f.Size
+					ebrAux.Fit = f.Fit
+					ebrAux.Status = 'T'
+					ebrAux.Next = -1
+					ebrAux.Start = mbr.Partitions[i].Start + int64(binary.Size(ebr)) // shows where logic partition starts. Starts at the beginning of the extended partition + EBR size.
+					file.Seek(ebrAux.Start, 0)
+					array := make([]byte, ebrAux.Size)
+					for j := 0; j < (int(ebrAux.Size) - 1); j++ {
+						array[j] = 'P'
+					}
+					_, err = file.Write(array)
+					file.Seek(mbr.Partitions[i].Start, 0)
+					var ebrBuffer bytes.Buffer
+					file.Seek(ebrAux.Next, 0)
+					binary.Write(&ebrBuffer, binary.BigEndian, &ebrAux)
+					_, err = file.Write(ebrBuffer.Bytes())
+					if err != nil {
+						fmt.Println(">> Problem writing logical partition. Try again.")
+					} else {
+						fmt.Println(">> First logical partition created.")
+					}
+					return
+				}
+				// Getting first EBR
+				file.Seek(mbr.Partitions[i].Start, 0)
+				sizeEbr = binary.Size(ebrAux)
+				ebrData = readBytes(file, sizeEbr)
+				bufferAux = bytes.NewBuffer(ebrData)
+				_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+				fmt.Println(" *Logica ", i)
+				fmt.Println("  Next:", ebrAux.Next)
+				fmt.Println("  Name " + string(ebrAux.Name[:]))
+				if ebrAux.Next != -1 {
+					for ebrAux.Next != -1 {
+						// Iterates ebrs until found the last one
+						i++
+						file.Seek(ebrAux.Next, 0)
+						ebrData := readBytes(file, sizeEbr)
+						bufferAux := bytes.NewBuffer(ebrData)
+						_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+						fmt.Println(" *Logica ", i)
+						fmt.Println("  Next:", ebrAux.Next)
+						fmt.Println("  Name " + string(ebrAux.Name[:]))
+					}
+				}
+
+				// Rewrites ebr
+				currentSize := ebrAux.Start + ebrAux.Size
+				ebr.Start = currentSize + int64(sizeEbr)
+				ebrAux.Next = currentSize
+				posAux := ebrAux.Start - int64(sizeEbr)
+				file.Seek(posAux, 0)
+				// Overwriting previous ebr
+				var ebrBuffer1 bytes.Buffer
+
+				binary.Write(&ebrBuffer1, binary.BigEndian, &ebrAux)
+				_, err = file.Write(ebrBuffer1.Bytes())
+				// ------------------------------------------------------
+				fmt.Println("Name ", string(ebr.Name[:]))
+				fmt.Println("Next ", ebr.Next)
+				fmt.Println("Start (partition) ", ebr.Start)
+				// Writing new logical partition
+				file.Seek(ebr.Start, 0)
+				array := make([]byte, ebr.Size)
+				for j := 0; j < (int(ebr.Size) - 1); j++ {
+					array[j] = 'l'
+				}
+				_, err = file.Write(array)
+				ebr.Size = f.Size
+				ebr.Next = -1
+				var ebrBuffer bytes.Buffer
+				file.Seek(ebrAux.Next, 0)
+				binary.Write(&ebrBuffer, binary.BigEndian, &ebr)
+				_, err = file.Write(ebrBuffer.Bytes())
+				if err != nil {
+					fmt.Println(">> Problem writing logical partition. Try again.")
+				} else {
+					fmt.Println(">> Logical partition created.")
+
+				}
+				break
+			}
+		}
+	} else {
+		// Creates extended or primary partition.
+		for i := 0; i < 4; i++ {
+			if mbr.Partitions[i].Status == byte('F') {
+				mbr.Partitions[i].Size = f.Size
+				mbr.Partitions[i].Status = byte('T')
+				if f.Fit == ' ' {
+					mbr.Partitions[i].Fit = byte('W')
+				} else {
+					mbr.Partitions[i].Fit = f.Fit
+				}
+				if f.Fit == ' ' {
+					mbr.Partitions[i].Type = byte('P')
+				} else {
+					mbr.Partitions[i].Type = f.Type
+				}
+				mbr.Partitions[i].Name = f.Name
+				mbr.Partitions[i].Type = f.Type
+				if i == 0 {
+					mbr.Partitions[i].Start = int64(binary.Size(mbr)) + 1
+					file.Seek(mbr.Partitions[i].Start, 0)
+				} else {
+					mbr.Partitions[i].Start = int64(mbr.Partitions[i-1].Size + 1)
+					file.Seek(mbr.Partitions[i].Start, 0)
+				}
+				if f.Type == byte('E') || f.Type == byte('e') {
+					ebr := EBR{}
+					ebr.Name = f.Name
+					ebr.Size = 0
+					ebr.Fit = byte('W')
+					ebr.Status = byte('F')
+					ebr.Next = -1
+					ebr.Start = mbr.Partitions[i].Start
+					var ebrBuffer bytes.Buffer
+					file.Seek(mbr.Partitions[i].Start, 0)
+					binary.Write(&ebrBuffer, binary.BigEndian, &ebr)
+					_, err = file.Write(ebrBuffer.Bytes())
+				}
+				binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
+				file.Write(buffer.Bytes())
+				mbr.Size = mbr.Size - mbr.Partitions[i].Size // Disk size after adding partition. MBR size always stays de same.
+				break
+			}
 		}
 	}
 	// Rewriting MBR
@@ -482,8 +658,6 @@ func (f *FDISK) deletePartition() {
 	_, er := file.Write(mbrBuffer.Bytes())
 	if er != nil {
 		fmt.Println(">>", er)
-	} else {
-		fmt.Println(">> Partition removed.")
 	}
 }
 
