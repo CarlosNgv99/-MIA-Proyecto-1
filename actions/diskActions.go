@@ -472,12 +472,12 @@ func (f *FDISK) getDisk(route string) {
 					ebrAux.Status = 'T'
 					ebrAux.Next = -1
 					ebrAux.Start = mbr.Partitions[i].Start + int64(binary.Size(ebr)) // shows where logic partition starts. Starts at the beginning of the extended partition + EBR size.
-					file.Seek(ebrAux.Start, 0)
+					/*file.Seek(ebrAux.Start, 0)
 					array := make([]byte, ebrAux.Size)
 					for j := 0; j < (int(ebrAux.Size) - 1); j++ {
 						array[j] = 'P'
 					}
-					_, err = file.Write(array)
+					_, err = file.Write(array)*/
 					file.Seek(mbr.Partitions[i].Start, 0)
 					var ebrBuffer bytes.Buffer
 					file.Seek(ebrAux.Next, 0)
@@ -525,16 +525,14 @@ func (f *FDISK) getDisk(route string) {
 				binary.Write(&ebrBuffer1, binary.BigEndian, &ebrAux)
 				_, err = file.Write(ebrBuffer1.Bytes())
 				// ------------------------------------------------------
-				fmt.Println("Name ", string(ebr.Name[:]))
-				fmt.Println("Next ", ebr.Next)
-				fmt.Println("Start (partition) ", ebr.Start)
+
 				// Writing new logical partition
-				file.Seek(ebr.Start, 0)
+				/*file.Seek(ebr.Start, 0)
 				array := make([]byte, ebr.Size)
 				for j := 0; j < (int(ebr.Size) - 1); j++ {
 					array[j] = 'l'
 				}
-				_, err = file.Write(array)
+				_, err = file.Write(array)*/
 				ebr.Size = f.Size
 				ebr.Next = -1
 				var ebrBuffer bytes.Buffer
@@ -623,8 +621,84 @@ func (f *FDISK) deletePartition() {
 	file.Seek(0, 0)
 
 	for i := 0; i < 4; i++ {
-		if mbr.Partitions[i].Name == f.Name {
+		if mbr.Partitions[i].Name == f.Name || mbr.Partitions[i].Type == byte('E') {
 			if f.Delete == "full" {
+				if mbr.Partitions[i].Type == byte('E') {
+					file.Seek(mbr.Partitions[i].Start, 0)
+					// First EBR
+					ebrAux := EBR{}
+					sizeEbr := binary.Size(ebrAux)
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+					if f.Name == ebrAux.Name {
+						fmt.Println(">> First logical partition cannot be deleted.")
+						return
+					}
+					prevEbr := EBR{}
+					if ebrAux.Next != -1 {
+						for ebrAux.Next != -1 && f.Name != ebrAux.Name {
+							// Iterates ebrs until found the last one
+							prevEbr = ebrAux
+							i++
+							file.Seek(ebrAux.Next, 0)
+							ebrData := readBytes(file, sizeEbr)
+							bufferAux := bytes.NewBuffer(ebrData)
+							_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+							fmt.Println(" *Logical ", i)
+							fmt.Println("  Next:", ebrAux.Next)
+							fmt.Println("  Name:", string(ebrAux.Name[:]))
+						}
+					}
+					if f.Name == ebrAux.Name {
+
+						if ebrAux.Next == -1 {
+							// Removes actual partition
+							pos := ebrAux.Start - int64(binary.Size(ebrAux))
+							file.Seek(pos, 0)
+							size := ebrAux.Size + int64(binary.Size(ebrAux))
+							array := make([]byte, size)
+							for j := 0; j < (int(size) - 1); j++ {
+								array[j] = 0
+							}
+							_, err = file.Write(array)
+							if err != nil {
+								log.Fatal(">> Write failed")
+							}
+							prevEbr.Next = -1
+							// Overwrites prev ebr
+							prevPos := prevEbr.Start - int64(binary.Size(ebrAux))
+							file.Seek(prevPos, 0)
+						} else {
+							prevEbr.Next = ebrAux.Next
+							pos := ebrAux.Start - int64(binary.Size(ebrAux))
+							file.Seek(pos, 0)
+							size := ebrAux.Size + int64(binary.Size(ebrAux))
+							array := make([]byte, size)
+							for j := 0; j < (int(size) - 1); j++ {
+								array[j] = 0
+							}
+							_, err = file.Write(array)
+							if err != nil {
+								log.Fatal(">> Write failed")
+							}
+							prevPos := prevEbr.Start - int64(binary.Size(ebrAux))
+							file.Seek(prevPos, 0)
+						}
+						var ebrBuffer1 bytes.Buffer
+						binary.Write(&ebrBuffer1, binary.BigEndian, &prevEbr)
+						_, err = file.Write(ebrBuffer1.Bytes())
+						if err != nil {
+							fmt.Println(">> Error deleting logical partition-")
+							return
+
+						} else {
+							fmt.Println(">> Logical partition " + string(ebrAux.Name[:]) + " removed.")
+							return
+						}
+					}
+
+				}
 				file.Seek(mbr.Partitions[i].Start, 0)
 				size := mbr.Partitions[i].Size
 				array := make([]byte, size)
