@@ -423,11 +423,14 @@ func (f *FDISK) getDisk(route string) {
 	// Creating partition
 	var buffer bytes.Buffer
 	file.Seek(0, 0) // Positioning at the beginning of the file
-
+	var positionAux int64
 	// Verifying if there's a extended partition
 	for i := 0; i < 4; i++ {
 		if mbr.Partitions[i].Type == byte('E') {
 			extendedpFound = true
+			fmt.Println("HALLADO")
+			positionAux = mbr.Partitions[i].Start
+			mbr.Partitions[i].Size = mbr.Partitions[i].Size - f.Size
 		}
 	}
 
@@ -452,7 +455,7 @@ func (f *FDISK) getDisk(route string) {
 				ebr.Next = -1
 				mbr.Partitions[i].Size = mbr.Partitions[i].Size - ebr.Size
 				// Searching for ebr in extended partition
-				file.Seek(mbr.Partitions[i].Start, 0)
+				file.Seek(positionAux, 0)
 
 				if mbr.Partitions[i].Size < 0 {
 					fmt.Println(">> There's not enough space within this partition.")
@@ -471,14 +474,16 @@ func (f *FDISK) getDisk(route string) {
 					ebrAux.Fit = f.Fit
 					ebrAux.Status = 'T'
 					ebrAux.Next = -1
-					ebrAux.Start = mbr.Partitions[i].Start + int64(binary.Size(ebr)) // shows where logic partition starts. Starts at the beginning of the extended partition + EBR size.
+					ebrAux.Start = positionAux + int64(binary.Size(ebr)) // shows where logic partition starts. Starts at the beginning of the extended partition + EBR size.
 					/*file.Seek(ebrAux.Start, 0)
 					array := make([]byte, ebrAux.Size)
 					for j := 0; j < (int(ebrAux.Size) - 1); j++ {
 						array[j] = 'P'
 					}
 					_, err = file.Write(array)*/
-					file.Seek(mbr.Partitions[i].Start, 0)
+					file.Seek(positionAux, 0)
+					fmt.Println("EXT START", positionAux)
+
 					var ebrBuffer bytes.Buffer
 					file.Seek(ebrAux.Next, 0)
 					binary.Write(&ebrBuffer, binary.BigEndian, &ebrAux)
@@ -487,11 +492,12 @@ func (f *FDISK) getDisk(route string) {
 						fmt.Println(">> Problem writing logical partition. Try again.")
 					} else {
 						fmt.Println(">> First logical partition created.")
+
 					}
-					return
+					break
 				}
 				// Getting first EBR
-				file.Seek(mbr.Partitions[i].Start, 0)
+				file.Seek(positionAux, 0)
 				sizeEbr = binary.Size(ebrAux)
 				ebrData = readBytes(file, sizeEbr)
 				bufferAux = bytes.NewBuffer(ebrData)
@@ -570,7 +576,7 @@ func (f *FDISK) getDisk(route string) {
 					mbr.Partitions[i].Start = int64(binary.Size(mbr)) + 1
 					file.Seek(mbr.Partitions[i].Start, 0)
 				} else {
-					mbr.Partitions[i].Start = int64(mbr.Partitions[i-1].Size + 1)
+					mbr.Partitions[i].Start = int64(mbr.Partitions[i-1].Size + mbr.Partitions[i-1].Start + 1)
 					file.Seek(mbr.Partitions[i].Start, 0)
 				}
 				if f.Type == byte('E') || f.Type == byte('e') {
@@ -589,7 +595,17 @@ func (f *FDISK) getDisk(route string) {
 				binary.Write(&buffer, binary.BigEndian, &mbr.Partitions[i])
 				file.Write(buffer.Bytes())
 				mbr.Size = mbr.Size - mbr.Partitions[i].Size // Disk size after adding partition. MBR size always stays de same.
-				break
+				// Rewriting MBR
+				var mbrBuffer bytes.Buffer
+				file.Seek(0, 0)
+				binary.Write(&mbrBuffer, binary.BigEndian, &mbr)
+				_, er := file.Write(mbrBuffer.Bytes())
+				if er != nil {
+					fmt.Println(">>", er)
+				} else {
+					fmt.Println(">> Partition created.")
+				}
+				return
 			}
 		}
 	}
@@ -624,6 +640,9 @@ func (f *FDISK) deletePartition() {
 		if mbr.Partitions[i].Name == f.Name || mbr.Partitions[i].Type == byte('E') {
 			if f.Delete == "full" {
 				if mbr.Partitions[i].Type == byte('E') {
+					sizeAux := mbr.Partitions[i].Size
+					fmt.Println("SIZE", sizeAux)
+
 					file.Seek(mbr.Partitions[i].Start, 0)
 					// First EBR
 					ebrAux := EBR{}
@@ -690,12 +709,11 @@ func (f *FDISK) deletePartition() {
 						_, err = file.Write(ebrBuffer1.Bytes())
 						if err != nil {
 							fmt.Println(">> Error deleting logical partition-")
-							return
-
-						} else {
-							fmt.Println(">> Logical partition " + string(ebrAux.Name[:]) + " removed.")
-							return
+							break
 						}
+						fmt.Println(">> Logical partition " + string(ebrAux.Name[:]) + " removed.")
+						// Resizing extended partition
+						mbr.Partitions[i].Size = sizeAux + ebrAux.Size + int64(binary.Size(ebrAux))
 					}
 
 				}
@@ -717,12 +735,70 @@ func (f *FDISK) deletePartition() {
 				mbr.Partitions[i].Size = 0
 
 			} else if f.Delete == "fast" {
+
+				if mbr.Partitions[i].Type == byte('E') {
+					file.Seek(mbr.Partitions[i].Start, 0)
+					// First EBR
+					ebrAux := EBR{}
+					sizeEbr := binary.Size(ebrAux)
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+					if f.Name == ebrAux.Name {
+						fmt.Println(">> First logical partition cannot be deleted.")
+						return
+					}
+					prevEbr := EBR{}
+					if ebrAux.Next != -1 {
+						for ebrAux.Next != -1 && f.Name != ebrAux.Name {
+							// Iterates ebrs until found the last one
+							prevEbr = ebrAux
+							i++
+							file.Seek(ebrAux.Next, 0)
+							ebrData := readBytes(file, sizeEbr)
+							bufferAux := bytes.NewBuffer(ebrData)
+							_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+							fmt.Println(" *Logical ", i)
+							fmt.Println("  Next:", ebrAux.Next)
+							fmt.Println("  Name:", string(ebrAux.Name[:]))
+						}
+					}
+					if f.Name == ebrAux.Name {
+						if ebrAux.Next == -1 {
+							// Removes actual partition
+							prevEbr.Next = -1
+							// Overwrites prev ebr
+							prevPos := prevEbr.Start - int64(binary.Size(ebrAux))
+							file.Seek(prevPos, 0)
+						} else {
+							prevEbr.Next = ebrAux.Next
+							prevPos := prevEbr.Start - int64(binary.Size(ebrAux))
+							file.Seek(prevPos, 0)
+						}
+						var ebrBuffer1 bytes.Buffer
+						binary.Write(&ebrBuffer1, binary.BigEndian, &prevEbr)
+						_, err = file.Write(ebrBuffer1.Bytes())
+						if err != nil {
+							fmt.Println(">> Error deleting logical partition-")
+							return
+
+						} else {
+							fmt.Println(">> Logical partition " + string(ebrAux.Name[:]) + " removed.")
+							break
+						}
+					}
+
+				}
+
 				mbr.Partitions[i].Status = 'F'
 				mbr.Partitions[i].Start = -1
 				mbr.Partitions[i].Name = [16]byte{0}
 				mbr.Partitions[i].Fit = ' '
 				mbr.Partitions[i].Type = ' '
 				mbr.Partitions[i].Size = 0
+			} else {
+				fmt.Println(">> Error deleting partition due to incorrect input parameter.")
+				return
 			}
 		}
 	}
@@ -732,6 +808,8 @@ func (f *FDISK) deletePartition() {
 	_, er := file.Write(mbrBuffer.Bytes())
 	if er != nil {
 		fmt.Println(">>", er)
+	} else {
+		fmt.Println(">> Partition removed and disk updated.")
 	}
 }
 
@@ -779,7 +857,7 @@ func mbrGraph(mbr MBR) {
 	f.WriteString("</TABLE> >];\n")
 	f.WriteString("}")
 
-	e := exec.Command("dot", "-Tpng", "mbr.txt", "-o mbr.png")
+	e := exec.Command("dot", "-Tpng", "/home/carlosngv/mbr.txt", "-o", "/home/carlosngv/mbr.png")
 	if er := e.Run(); er != nil {
 		fmt.Println(">> Error", er)
 	}
