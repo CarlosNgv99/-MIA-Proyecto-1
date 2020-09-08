@@ -51,7 +51,7 @@ func (l *lexer) Lex(lval *yySymType) int {
 %yyn c = l.Next()
 %yym l.Mark()
 
-digit         [0-9]+|{unicodeDigit}+
+digit         ("-")?[0-9]+|{unicodeDigit}+
 id    {letter}({letter}|{digit})*
 letter        [_a-zA-Z]|{unicodeLetter}
 diskName	  {letter}({letter}|"_"|{digit})*"."dsk

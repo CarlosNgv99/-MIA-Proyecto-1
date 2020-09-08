@@ -15,7 +15,9 @@ import (
 	"unsafe"
 )
 
-// MKDISK
+var diskList = []MountedDisk{}
+var idChar = 'a'
+var idNum = 0
 
 // Disk exported
 type Disk struct {
@@ -23,6 +25,22 @@ type Disk struct {
 	Route string
 	Name  string
 	Unit  string
+}
+
+// MountedDisk exported
+type MountedDisk struct {
+	Path          string
+	DiskName      string
+	PartitionName string
+	MountID       string
+	Letter        int
+	Number        int64
+}
+
+// Mount exported
+type Mount struct {
+	Route string
+	Name  string
 }
 
 // MBR exported
@@ -58,7 +76,7 @@ func (d *Disk) CreateDisk() {
 	if d.Name == "" {
 		fmt.Println(">> Disk name is missing. Try again.")
 	} else if d.Route == "" {
-		fmt.Println("Disk path is missing. Try again.")
+		fmt.Println(">> Disk path is missing. Try again.")
 	} else if d.Size == 0 {
 		fmt.Println(">> Disk size is missing. Try again.")
 	} else {
@@ -70,6 +88,170 @@ func (d *Disk) CreateDisk() {
 		}
 
 	}
+}
+
+// ----------------------------------------- MOUNT --------------------------------------------------------- //
+
+// SetMountRoute exported
+func (m *Mount) SetMountRoute(route string) {
+	m.Route = route
+}
+
+// SetMountName exported
+func (m *Mount) SetMountName(name string) {
+	m.Name = name
+}
+
+// ShowMountedPartitions exported
+func ShowMountedPartitions() {
+	for _, value := range diskList {
+		fmt.Println(">> DISK NAME:", value.DiskName)
+		fmt.Println(">> PARTITION NAME:", value.PartitionName)
+		fmt.Println(">> PATH:", value.Path)
+	}
+}
+
+func randChar() string {
+	randomChar := 'a' + rune(rand.Intn(26))
+	return string(randomChar)
+}
+
+// SetMount exported
+func (m *Mount) SetMount() {
+	file, err := os.OpenFile(m.Route, os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Println(">> Error reading the file. Try again.")
+	}
+	defer file.Close()
+
+	// Setting disk name
+	re := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.dsk`)
+	diskName := re.FindString(m.Route)
+
+	// Verifying and deploying disk information
+	mbr := MBR{}
+	size := int(unsafe.Sizeof(mbr))
+	data := readBytes(file, size)
+	mbrBuffer := bytes.NewBuffer(data)
+	// Reading bytes to mbr
+	binary.Read(mbrBuffer, binary.BigEndian, &mbr)
+
+	for i := 0; i < 4; i++ {
+		if mbr.Partitions[i].Type == byte('E') {
+			//Starts reading EBRs
+			file.Seek(mbr.Partitions[i].Start, 0)
+			ebrAux := EBR{}
+			sizeEbr := binary.Size(ebrAux)
+			ebrData := readBytes(file, sizeEbr)
+			bufferAux := bytes.NewBuffer(ebrData)
+			_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+			if ebrAux.Next != -1 {
+				for ebrAux.Next != -1 {
+					// Iterates ebrs until found the last one
+					file.Seek(ebrAux.Next, 0)
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+				}
+				if string(ebrAux.Name[:len(m.Name)]) == m.Name {
+					partitionLetter, partitionNumber, mounted := setMountID(diskName, string(ebrAux.Name[:len(m.Name)]))
+					if mounted == false {
+						return
+					}
+					mountID := "vd" + string(partitionLetter) + strconv.Itoa(int(partitionNumber))
+					mountedDisk := MountedDisk{
+						Path:          m.Route,
+						DiskName:      diskName,
+						PartitionName: string(ebrAux.Name[:len(m.Name)]),
+						Letter:        partitionLetter,
+						Number:        partitionNumber,
+						MountID:       mountID,
+					}
+					diskList = append(diskList, mountedDisk)
+					fmt.Println(diskList)
+					return
+				}
+			} else {
+				if string(ebrAux.Name[:len(m.Name)]) == m.Name {
+					partitionLetter, partitionNumber, mounted := setMountID(diskName, string(ebrAux.Name[:len(m.Name)]))
+					if mounted == false {
+						return
+					}
+					mountID := "vd" + string(partitionLetter) + strconv.Itoa(int(partitionNumber))
+
+					mountedDisk := MountedDisk{
+						Path:          m.Route,
+						DiskName:      diskName,
+						PartitionName: string(ebrAux.Name[:len(m.Name)]),
+						Letter:        partitionLetter,
+						Number:        partitionNumber,
+						MountID:       mountID,
+					}
+					diskList = append(diskList, mountedDisk)
+					fmt.Println(diskList)
+					return
+				}
+			}
+		}
+		if string(mbr.Partitions[i].Name[:len(m.Name)]) == m.Name && mbr.Partitions[i].Type == byte('P') {
+			partitionLetter, partitionNumber, mounted := setMountID(diskName, string(mbr.Partitions[i].Name[:len(m.Name)]))
+			if mounted == false {
+				return
+			}
+
+			mountID := "vd" + string(partitionLetter) + strconv.Itoa(int(partitionNumber))
+			mountedDisk := MountedDisk{
+				Path:          m.Route,
+				DiskName:      diskName,
+				PartitionName: string(mbr.Partitions[i].Name[:len(m.Name)]),
+				Letter:        partitionLetter,
+				Number:        partitionNumber,
+				MountID:       mountID,
+			}
+			diskList = append(diskList, mountedDisk)
+			fmt.Println(diskList)
+			return
+		}
+	}
+	fmt.Println(">> Partition not found. Try again.")
+}
+
+func setMountID(diskName string, partitionName string) (int, int64, bool) {
+	diskFound := false
+	var partitionNumber int64
+	var partitionLetter int
+
+	for _, value := range diskList {
+		if partitionName == value.PartitionName {
+			fmt.Println(">> Partition is already mounted")
+			return 0, 0, false
+		}
+	}
+
+	for _, value := range diskList {
+		if diskName == value.DiskName {
+			partitionNumber = value.Number + 1
+			partitionLetter = value.Letter
+			diskFound = true
+		}
+
+	}
+	if diskFound != true {
+		partitionLetter = 'a' + idNum
+		partitionNumber = 1
+		idNum++
+		fmt.Println("NEW DISK!")
+	}
+	fmt.Println(string(partitionLetter), partitionNumber)
+	return (partitionLetter), partitionNumber, true
+}
+
+// ----------------------------------------------------------------------------------------------------------- //
+
+// SetAddOption exported
+func (f *FDISK) SetAddOption(number string) {
+	num, _ := strconv.Atoi(number)
+	f.AddNumber = int64(num)
 }
 
 // SetDiskName exported
@@ -282,15 +464,16 @@ func SetUnit(unit string, sizeU int) int64 {
 
 // FDISK exported
 type FDISK struct {
-	Route  string
-	Status byte
-	Type   byte
-	Fit    byte
-	Start  int64
-	Size   int64
-	Unit   string
-	Name   [16]byte
-	Delete string
+	Route     string
+	Status    byte
+	Type      byte
+	Fit       byte
+	Start     int64
+	Size      int64
+	Unit      string
+	Name      [16]byte
+	Delete    string
+	AddNumber int64
 }
 
 // CreatePartition exported
@@ -308,11 +491,13 @@ func (f *FDISK) CreatePartition() {
 	} else if f.Route == "" {
 		fmt.Println(">> Partition path is missing. Try again.")
 	} else {
-		if len(f.Delete) == 0 {
+		if len(f.Delete) == 0 && f.AddNumber == 0 {
 			f.SetPartitionSize()
 			f.getDisk(f.Route)
-		} else {
+		} else if len(f.Delete) != 0 {
 			f.deletePartition()
+		} else if f.AddNumber != 0 {
+			f.addSize()
 		}
 	}
 
@@ -428,7 +613,6 @@ func (f *FDISK) getDisk(route string) {
 	for i := 0; i < 4; i++ {
 		if mbr.Partitions[i].Type == byte('E') {
 			extendedpFound = true
-			fmt.Println("HALLADO")
 			positionAux = mbr.Partitions[i].Start
 			mbr.Partitions[i].Size = mbr.Partitions[i].Size - f.Size
 		}
@@ -502,9 +686,6 @@ func (f *FDISK) getDisk(route string) {
 				ebrData = readBytes(file, sizeEbr)
 				bufferAux = bytes.NewBuffer(ebrData)
 				_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
-				fmt.Println(" *Logica ", i)
-				fmt.Println("  Next:", ebrAux.Next)
-				fmt.Println("  Name " + string(ebrAux.Name[:]))
 				if ebrAux.Next != -1 {
 					for ebrAux.Next != -1 {
 						// Iterates ebrs until found the last one
@@ -513,9 +694,6 @@ func (f *FDISK) getDisk(route string) {
 						ebrData := readBytes(file, sizeEbr)
 						bufferAux := bytes.NewBuffer(ebrData)
 						_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
-						fmt.Println(" *Logica ", i)
-						fmt.Println("  Next:", ebrAux.Next)
-						fmt.Println("  Name " + string(ebrAux.Name[:]))
 					}
 				}
 
@@ -640,6 +818,25 @@ func (f *FDISK) deletePartition() {
 		if mbr.Partitions[i].Name == f.Name || mbr.Partitions[i].Type == byte('E') {
 			if f.Delete == "full" {
 				if mbr.Partitions[i].Type == byte('E') {
+					if mbr.Partitions[i].Name == f.Name {
+						file.Seek(mbr.Partitions[i].Start, 0)
+						size := mbr.Partitions[i].Size
+						array := make([]byte, size)
+						for j := 0; j < (int(size) - 1); j++ {
+							array[j] = 0
+						}
+						_, err = file.Write(array)
+						if err != nil {
+							log.Fatal(">> Write failed")
+						}
+						mbr.Partitions[i].Status = 'F'
+						mbr.Partitions[i].Start = -1
+						mbr.Partitions[i].Name = [16]byte{0}
+						mbr.Partitions[i].Fit = ' '
+						mbr.Partitions[i].Type = ' '
+						mbr.Partitions[i].Size = 0
+						break
+					}
 					sizeAux := mbr.Partitions[i].Size
 					fmt.Println("SIZE", sizeAux)
 
@@ -664,9 +861,7 @@ func (f *FDISK) deletePartition() {
 							ebrData := readBytes(file, sizeEbr)
 							bufferAux := bytes.NewBuffer(ebrData)
 							_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
-							fmt.Println(" *Logical ", i)
-							fmt.Println("  Next:", ebrAux.Next)
-							fmt.Println("  Name:", string(ebrAux.Name[:]))
+
 						}
 					}
 					if f.Name == ebrAux.Name {
@@ -758,9 +953,7 @@ func (f *FDISK) deletePartition() {
 							ebrData := readBytes(file, sizeEbr)
 							bufferAux := bytes.NewBuffer(ebrData)
 							_ = binary.Read(bufferAux, binary.BigEndian, &ebrAux)
-							fmt.Println(" *Logical ", i)
-							fmt.Println("  Next:", ebrAux.Next)
-							fmt.Println("  Name:", string(ebrAux.Name[:]))
+
 						}
 					}
 					if f.Name == ebrAux.Name {
@@ -811,6 +1004,93 @@ func (f *FDISK) deletePartition() {
 	} else {
 		fmt.Println(">> Partition removed and disk updated.")
 	}
+}
+
+func (f *FDISK) addSize() {
+	size := f.SetPartitionUnit(f.AddNumber)
+	file, err := os.OpenFile(f.Route, os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Println(">> Error reading the file. Try again.")
+	}
+	defer file.Close()
+	// Verifying and deploying disk information
+	file.Seek(0, 0)
+	mbr := MBR{}
+	mbrSize := int(unsafe.Sizeof(mbr))
+	data := readBytes(file, mbrSize)
+	// Reading bytes to mbr
+	mbrBuff := bytes.NewBuffer(data)
+	binary.Read(mbrBuff, binary.BigEndian, &mbr)
+	for i := 0; i < 4; i++ {
+		if mbr.Partitions[i].Type == 'E' {
+			file.Seek(mbr.Partitions[i].Start, 0)
+			ebrAux := EBR{}
+			sizeEbr := binary.Size(ebrAux)
+			dataEbr := readBytes(file, sizeEbr)
+			ebrBuff := bytes.NewBuffer(dataEbr)
+			_ = binary.Read(ebrBuff, binary.BigEndian, &ebrAux)
+			i := 1
+			if ebrAux.Next != -1 {
+				for ebrAux.Next != -1 && ebrAux.Name != f.Name {
+					// Iterates ebrs until found the last one
+					file.Seek(ebrAux.Next, 0)
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					binary.Read(bufferAux, binary.BigEndian, &ebrAux)
+					fmt.Println(string(ebrAux.Name[:]))
+					i++
+					if i == 24 {
+						return
+					}
+				}
+			}
+			if ebrAux.Name == f.Name {
+				if size < 0 {
+					ebrAux.Size = ebrAux.Size + (size)
+					if ebrAux.Size < 0 {
+						fmt.Println(">> You have passed the maximum size to reduce. Try again.")
+						return
+					}
+				} else {
+					ebrAux.Size = ebrAux.Size + (size)
+				}
+				actualPos := ebrAux.Start - int64(binary.Size(ebrAux))
+				file.Seek(actualPos, 0)
+				var ebrBuffer1 bytes.Buffer
+				binary.Write(&ebrBuffer1, binary.BigEndian, &ebrAux)
+				_, err = file.Write(ebrBuffer1.Bytes())
+				return
+			}
+		} else {
+			if mbr.Partitions[i].Name == f.Name {
+				if size < 0 {
+					fmt.Println("PREV SIZE:", mbr.Partitions[i].Size)
+					mbr.Partitions[i].Size = mbr.Partitions[i].Size + (size)
+					fmt.Println("NEW SIZE:", mbr.Partitions[i].Size)
+					if mbr.Partitions[i].Size < 0 {
+						fmt.Println(">> You have reduced the maximum size allowed. Try again.")
+						return
+					}
+
+				} else {
+					fmt.Println("PREV SIZE:", mbr.Partitions[i].Size)
+					mbr.Partitions[i].Size = mbr.Partitions[i].Size + (size)
+					fmt.Println("NEW SIZE:", mbr.Partitions[i].Size)
+				}
+				var mbrBuffer bytes.Buffer
+				file.Seek(0, 0)
+				binary.Write(&mbrBuffer, binary.BigEndian, &mbr)
+				_, er := file.Write(mbrBuffer.Bytes())
+				if er != nil {
+					fmt.Println(">>", er)
+				} else {
+					fmt.Println(">> Partition " + string(mbr.Partitions[i].Name[:]) + " resized.")
+				}
+				return
+			}
+		}
+	}
+	fmt.Println(">> Couln't find any coincidence.")
 }
 
 func mbrGraph(mbr MBR) {

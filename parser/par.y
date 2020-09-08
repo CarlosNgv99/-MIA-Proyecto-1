@@ -13,6 +13,7 @@ import (
 var newDisk actions.Disk = actions.Disk{}
 var newPartition actions.Partition = actions.Partition{}
 var newFDisk actions.FDISK = actions.FDISK{}
+var newMount actions.Mount = actions.Mount{}
 
 type node struct {
   name string
@@ -65,6 +66,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %token <token> mkfs
 %token <token> mkdisk
 %token <token> number
+%token <token> negNumber
 %token <token> name
 %token <token> path
 %token <token> pause
@@ -100,6 +102,7 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <token> mkfs
 %type <token> mkdisk
 %type <token> number
+%type <token> negNumber
 %type <token> name
 %type <token> path
 %type <token> pause
@@ -175,13 +178,16 @@ MKDISKT: hyphen size arrow digit { newDisk.SetDiskSize($4) }
 
 
 
-MOUNT: mount MOUNTO { $$ = Node($1) };
+MOUNT: mount MOUNTO { 
+	newMount.SetMount()
+	newMount = actions.Mount{}
+ };
 
 MOUNTO: MOUNTT
 	|	MOUNTO MOUNTT EMPTY;
 
-MOUNTT: hyphen path arrow route { actions.PrintParameter($4) }
-	|	hyphen name arrow id { actions.PrintParameter($4) };
+MOUNTT: hyphen path arrow quote route quote { newMount.SetMountRoute($5) }
+	|	hyphen name arrow id { newMount.SetMountName($4) };
 
 UNMOUNT: unmount hyphen idn {$$ = Node($1)};
 
@@ -199,7 +205,7 @@ FDISKT:	hyphen unit arrow id  { newFDisk.SetFUnit($4) }
 | hyphen tpe arrow id { newFDisk.SetPartitionType($4) }
 | hyphen fit arrow id { newFDisk.SetPartitionFit($4) }
 | hyphen delete arrow id { newFDisk.SetDeleteOption($4) }
-| hyphen add { actions.PrintParameter($2) }
+| hyphen add arrow digit { newFDisk.SetAddOption($4) }
 | hyphen size arrow digit  { newFDisk.SetPSize($4) }
 | hyphen name arrow id { newFDisk.SetPartitionName($4) }
 | hyphen path arrow quote route quote { newFDisk.SetPartitionRoute($5) }

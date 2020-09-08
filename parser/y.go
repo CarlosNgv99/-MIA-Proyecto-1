@@ -19,6 +19,7 @@ import (
 var newDisk actions.Disk = actions.Disk{}
 var newPartition actions.Partition = actions.Partition{}
 var newFDisk actions.FDISK = actions.FDISK{}
+var newMount actions.Mount = actions.Mount{}
 
 type node struct {
 	name     string
@@ -41,7 +42,7 @@ func (n node) print(out io.Writer, indent string) {
 func Node(name string) node           { return node{name: name} }
 func (n node) append(nn ...node) node { n.children = append(n.children, nn...); return n }
 
-//line par.y:39
+//line par.y:40
 type yySymType struct {
 	yys   int
 	node  node
@@ -70,17 +71,18 @@ const mbr = 57364
 const mkfs = 57365
 const mkdisk = 57366
 const number = 57367
-const name = 57368
-const path = 57369
-const pause = 57370
-const rmdisk = 57371
-const size = 57372
-const tpe = 57373
-const unit = 57374
-const unmount = 57375
-const read = 57376
-const route = 57377
-const quote = 57378
+const negNumber = 57368
+const name = 57369
+const path = 57370
+const pause = 57371
+const rmdisk = 57372
+const size = 57373
+const tpe = 57374
+const unit = 57375
+const unmount = 57376
+const read = 57377
+const route = 57378
+const quote = 57379
 
 var yyToknames = [...]string{
 	"$end",
@@ -108,6 +110,7 @@ var yyToknames = [...]string{
 	"mkfs",
 	"mkdisk",
 	"number",
+	"negNumber",
 	"name",
 	"path",
 	"pause",
@@ -127,7 +130,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line par.y:220
+//line par.y:226
 
 // Run exported
 func Run() {
@@ -166,39 +169,39 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 103
+const yyLast = 107
 
 var yyAct = [...]int{
-	59, 15, 100, 18, 53, 52, 99, 98, 92, 85,
-	13, 51, 82, 19, 16, 96, 95, 94, 20, 17,
-	80, 78, 58, 14, 21, 55, 56, 33, 101, 54,
-	50, 49, 45, 44, 29, 47, 43, 41, 46, 39,
-	38, 24, 103, 63, 91, 89, 88, 87, 86, 69,
-	84, 79, 57, 93, 40, 97, 34, 30, 25, 35,
-	48, 31, 27, 42, 26, 37, 83, 90, 81, 102,
-	77, 76, 75, 74, 73, 72, 71, 70, 68, 67,
-	66, 65, 64, 62, 61, 60, 36, 3, 1, 12,
-	22, 2, 10, 32, 9, 8, 28, 7, 6, 5,
-	11, 23, 4,
+	59, 15, 104, 18, 53, 52, 103, 102, 101, 94,
+	13, 51, 86, 19, 16, 83, 79, 99, 98, 20,
+	17, 97, 96, 81, 14, 21, 55, 56, 58, 33,
+	54, 50, 49, 45, 44, 105, 29, 43, 47, 46,
+	39, 38, 41, 63, 24, 107, 93, 90, 89, 69,
+	88, 87, 85, 80, 57, 95, 40, 100, 34, 30,
+	25, 35, 48, 31, 27, 42, 26, 84, 37, 92,
+	91, 82, 106, 78, 77, 76, 75, 74, 73, 72,
+	71, 70, 68, 67, 66, 65, 64, 62, 61, 60,
+	36, 3, 1, 12, 22, 2, 10, 32, 9, 8,
+	28, 7, 6, 5, 11, 23, 4,
 }
 
 var yyPact = [...]int{
 	-10, -1000, -10, -1000, -1000, -1000, -1000, -1000, -1000, -1000,
-	-1000, -1000, -1000, 43, 49, 47, 42, 46, 41, 44,
-	-1000, 82, -1000, 43, -1000, 13, 38, 10, 42, -1000,
-	6, 8, 41, -1000, -1, 35, -13, -1000, 81, 80,
-	-1000, 79, -1000, 78, 77, 76, 75, 74, -1000, 73,
-	72, 71, 70, -1000, 69, 68, 67, 66, -1000, -1000,
-	-14, 34, -15, -1000, 61, -24, 57, 33, -27, -1000,
-	31, 30, 29, 28, 60, 27, -28, 37, -1000, -1000,
-	-1000, -1000, -18, -1000, -1000, -19, -1000, -1000, -1000, -1000,
-	-1000, -1000, -20, 40, -29, -30, -34, -3, -1000, -1000,
-	-1000, 65, 25, -1000,
+	-1000, -1000, -1000, 45, 51, 49, 44, 48, 43, 46,
+	-1000, 86, -1000, 45, -1000, 13, 40, 14, 44, -1000,
+	6, 10, 43, -1000, -1, 37, -8, -1000, 85, 84,
+	-1000, 83, -1000, 82, 81, 80, 79, 78, -1000, 77,
+	76, 75, 74, 73, 72, 71, 70, 69, -1000, -1000,
+	-21, 36, -13, -1000, 64, -22, 58, 35, -25, -1000,
+	34, 33, 31, 30, 63, 62, 29, -28, 39, -14,
+	-1000, -1000, -1000, -15, -1000, -1000, -18, -1000, -1000, -1000,
+	-1000, -1000, -1000, -1000, -19, 42, -29, -30, -31, -35,
+	3, -1000, -1000, -1000, -1000, 68, 28, -1000,
 }
 
 var yyPgo = [...]int{
-	0, 102, 101, 41, 100, 99, 98, 97, 96, 34,
-	95, 94, 93, 27, 92, 87, 91, 89, 88, 0,
+	0, 106, 105, 44, 104, 103, 102, 101, 100, 36,
+	99, 98, 97, 29, 96, 91, 95, 93, 92, 0,
 }
 
 var yyR1 = [...]int{
@@ -212,23 +215,23 @@ var yyR1 = [...]int{
 var yyR2 = [...]int{
 	0, 1, 1, 2, 1, 1, 1, 1, 1, 1,
 	1, 1, 1, 1, 3, 5, 2, 1, 3, 4,
-	6, 4, 4, 2, 1, 3, 4, 4, 3, 2,
-	1, 3, 4, 4, 4, 4, 2, 4, 4, 6,
+	6, 4, 4, 2, 1, 3, 6, 4, 3, 2,
+	1, 3, 4, 4, 4, 4, 4, 4, 4, 6,
 	7, 5, 9, 0,
 }
 
 var yyChk = [...]int{
 	-1000, -18, -16, -15, -1, -5, -6, -7, -10, -11,
-	-14, -4, -17, 20, 33, 11, 24, 29, 13, 23,
-	28, 34, -15, -2, -3, 15, 15, 15, -8, -9,
-	15, 15, -12, -13, 15, 15, 4, -3, 27, 26,
-	16, 27, -9, 30, 27, 26, 32, 27, -13, 32,
-	31, 12, 6, 5, 30, 26, 27, 17, 35, -19,
+	-14, -4, -17, 20, 34, 11, 24, 30, 13, 23,
+	29, 35, -15, -2, -3, 15, 15, 15, -8, -9,
+	15, 15, -12, -13, 15, 15, 4, -3, 28, 27,
+	16, 28, -9, 31, 28, 27, 33, 28, -13, 33,
+	32, 12, 6, 5, 31, 27, 28, 17, 36, -19,
 	4, 4, 4, -19, 4, 4, 4, 4, 4, -19,
-	4, 4, 4, 4, 4, 4, 4, 4, 35, 17,
-	35, 7, 36, 9, 17, 36, 17, 17, 17, 17,
-	7, 17, 36, 16, 35, 35, 35, 15, 36, 36,
-	36, 31, 4, 17,
+	4, 4, 4, 4, 4, 4, 4, 4, 4, 37,
+	17, 36, 7, 37, 9, 17, 37, 17, 17, 17,
+	17, 7, 7, 17, 37, 16, 36, 36, 36, 36,
+	15, 37, 37, 37, 37, 32, 4, 17,
 }
 
 var yyDef = [...]int{
@@ -237,12 +240,12 @@ var yyDef = [...]int{
 	13, 0, 3, 23, 24, 0, 0, 0, 16, 17,
 	0, 0, 29, 30, 0, 0, 0, 43, 0, 0,
 	28, 0, 43, 0, 0, 0, 0, 0, 43, 0,
-	0, 0, 0, 36, 0, 0, 0, 0, 14, 25,
+	0, 0, 0, 0, 0, 0, 0, 0, 14, 25,
 	0, 0, 0, 18, 0, 0, 0, 0, 0, 31,
-	0, 0, 0, 0, 0, 0, 0, 0, 26, 27,
-	15, 19, 0, 21, 22, 0, 32, 33, 34, 35,
-	37, 38, 0, 41, 0, 0, 0, 0, 20, 40,
-	39, 0, 0, 42,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	27, 15, 19, 0, 21, 22, 0, 32, 33, 34,
+	35, 36, 37, 38, 0, 41, 0, 0, 0, 0,
+	0, 26, 20, 40, 39, 0, 0, 42,
 }
 
 var yyTok1 = [...]int{
@@ -253,7 +256,7 @@ var yyTok2 = [...]int{
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
 	22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-	32, 33, 34, 35, 36,
+	32, 33, 34, 35, 36, 37,
 }
 
 var yyTok3 = [...]int{
@@ -599,80 +602,81 @@ yydefault:
 
 	case 13:
 		yyDollar = yyS[yypt-1 : yypt+1]
-//line par.y:156
+//line par.y:159
 		{
 			actions.PauseAction()
 		}
 	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line par.y:158
+//line par.y:161
 		{
 			actions.ReadFile(yyDollar[3].token)
 		}
 	case 15:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:160
+//line par.y:163
 		{
 			actions.GetFile(yyDollar[5].token)
 		}
 	case 16:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:162
+//line par.y:165
 		{
 			newDisk.CreateDisk()
 			newDisk = actions.Disk{}
 		}
 	case 19:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:170
+//line par.y:173
 		{
 			newDisk.SetDiskSize(yyDollar[4].token)
 		}
 	case 20:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line par.y:171
+//line par.y:174
 		{
 			newDisk.SetDiskRoute(yyDollar[5].token)
 		}
 	case 21:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:172
+//line par.y:175
 		{
 			newDisk.SetDiskName(yyDollar[4].token)
 		}
 	case 22:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:173
+//line par.y:176
 		{
 			newDisk.SetDiskUnit(yyDollar[4].token)
 		}
 	case 23:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:178
+//line par.y:181
 		{
-			yyVAL.node = Node(yyDollar[1].token)
+			newMount.SetMount()
+			newMount = actions.Mount{}
 		}
 	case 26:
-		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:183
+		yyDollar = yyS[yypt-6 : yypt+1]
+//line par.y:189
 		{
-			actions.PrintParameter(yyDollar[4].token)
+			newMount.SetMountRoute(yyDollar[5].token)
 		}
 	case 27:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:184
+//line par.y:190
 		{
-			actions.PrintParameter(yyDollar[4].token)
+			newMount.SetMountName(yyDollar[4].token)
 		}
 	case 28:
 		yyDollar = yyS[yypt-3 : yypt+1]
-//line par.y:186
+//line par.y:192
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 29:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:188
+//line par.y:194
 		{
 			newFDisk.CreatePartition()
 			newPartition = actions.Partition{}
@@ -680,67 +684,67 @@ yydefault:
 		}
 	case 32:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:198
+//line par.y:204
 		{
 			newFDisk.SetFUnit(yyDollar[4].token)
 		}
 	case 33:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:199
+//line par.y:205
 		{
 			newFDisk.SetPartitionType(yyDollar[4].token)
 		}
 	case 34:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:200
+//line par.y:206
 		{
 			newFDisk.SetPartitionFit(yyDollar[4].token)
 		}
 	case 35:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:201
+//line par.y:207
 		{
 			newFDisk.SetDeleteOption(yyDollar[4].token)
 		}
 	case 36:
-		yyDollar = yyS[yypt-2 : yypt+1]
-//line par.y:202
+		yyDollar = yyS[yypt-4 : yypt+1]
+//line par.y:208
 		{
-			actions.PrintParameter(yyDollar[2].token)
+			newFDisk.SetAddOption(yyDollar[4].token)
 		}
 	case 37:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:203
+//line par.y:209
 		{
 			newFDisk.SetPSize(yyDollar[4].token)
 		}
 	case 38:
 		yyDollar = yyS[yypt-4 : yypt+1]
-//line par.y:204
+//line par.y:210
 		{
 			newFDisk.SetPartitionName(yyDollar[4].token)
 		}
 	case 39:
 		yyDollar = yyS[yypt-6 : yypt+1]
-//line par.y:205
+//line par.y:211
 		{
 			newFDisk.SetPartitionRoute(yyDollar[5].token)
 		}
 	case 40:
 		yyDollar = yyS[yypt-7 : yypt+1]
-//line par.y:209
+//line par.y:215
 		{
 			actions.RemoveDisk(yyDollar[6].token)
 		}
 	case 41:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line par.y:213
+//line par.y:219
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
 	case 42:
 		yyDollar = yyS[yypt-9 : yypt+1]
-//line par.y:214
+//line par.y:220
 		{
 			yyVAL.node = Node(yyDollar[1].token)
 		}
