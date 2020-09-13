@@ -2,18 +2,24 @@
 package parser
 
 import (
+	"regexp"
   "fmt"
   "bytes"
   "io"
   "bufio"
 	"os"
 	"MIA-P1/actions"
+	"strings"
 )
 
 var newDisk actions.Disk = actions.Disk{}
 var newPartition actions.Partition = actions.Partition{}
 var newFDisk actions.FDISK = actions.FDISK{}
 var newMount actions.Mount = actions.Mount{}
+var newUnmount actions.Unmount = actions.Unmount{}
+var stringAux string = ""
+var skipFound bool = false
+
 
 type node struct {
   name string
@@ -160,7 +166,7 @@ PAUSE: pause { actions.PauseAction() };
 
 READ: read arrow route { actions.ReadFile($3)}
 
-EXEC: exec hyphen path arrow route {actions.GetFile($5)};
+EXEC: exec hyphen path arrow route {Exec($5)};
 
 MKDISK: mkdisk MKDISKO { 
 	newDisk.CreateDisk()
@@ -171,8 +177,9 @@ MKDISKO: MKDISKT
 | MKDISKO MKDISKT EMPTY;
 
 MKDISKT: hyphen size arrow digit { newDisk.SetDiskSize($4) }
-| hyphen path arrow quote route quote { newDisk.SetDiskRoute($5) }
+| hyphen path arrow route { newDisk.SetDiskRoute($4) }
 | hyphen name arrow diskName { newDisk.SetDiskName($4) }
+| hyphen path arrow quote route quote { newDisk.SetDiskRoute($5) }
 | hyphen unit arrow id { newDisk.SetDiskUnit($4) }
 ;
 
@@ -181,7 +188,8 @@ MKDISKT: hyphen size arrow digit { newDisk.SetDiskSize($4) }
 MOUNT: mount MOUNTO { 
 	newMount.SetMount()
 	newMount = actions.Mount{}
- };
+ }
+ | mount { actions.ShowMountedPartitions()};
 
 MOUNTO: MOUNTT
 	|	MOUNTO MOUNTT EMPTY;
@@ -189,7 +197,15 @@ MOUNTO: MOUNTT
 MOUNTT: hyphen path arrow quote route quote { newMount.SetMountRoute($5) }
 	|	hyphen name arrow id { newMount.SetMountName($4) };
 
-UNMOUNT: unmount hyphen idn {$$ = Node($1)};
+UNMOUNT: unmount UNMOUNTO  { 
+	newUnmount.UnmountPartition()
+	newUnmount = actions.Unmount{}
+ };
+
+ UNMOUNTO: UNMOUNTT
+	| UNMOUNTO UNMOUNTT EMPTY;
+
+UNMOUNTT: hyphen id arrow id { newUnmount.SetUnmount($2, $4) } ;
 
 FDISK: fdisk FDISKO {
 	newFDisk.CreatePartition()
@@ -209,6 +225,8 @@ FDISKT:	hyphen unit arrow id  { newFDisk.SetFUnit($4) }
 | hyphen size arrow digit  { newFDisk.SetPSize($4) }
 | hyphen name arrow id { newFDisk.SetPartitionName($4) }
 | hyphen path arrow quote route quote { newFDisk.SetPartitionRoute($5) }
+| hyphen path arrow route { newFDisk.SetPartitionRoute($4) }
+
 ;
 
 
@@ -243,6 +261,68 @@ func Run() {
 		}
 	}
 
+}
+
+// RunExec exported
+func RunExec(reader *bufio.Reader) {
+	yyDebug = 0
+	yyErrorVerbose = true
+	var stringAux string = ""
+
+	for {
+		var ok bool
+		var eqn string
+		
+		if eqn, ok = input(reader); ok {
+			eqn = strings.TrimSpace(eqn)
+			eqn = strings.Replace(eqn," ","",-1)
+			if strings.HasPrefix(eqn, "#"){
+				continue
+			}
+			if len(eqn) == 0 || len(eqn) == 1 {
+				continue
+			}
+			if skipFound == true {
+				stringAux = stringAux+ eqn 
+				stringAux = strings.Replace(stringAux," ","",-1)
+				fmt.Println(">>", stringAux)
+				l := newLexer(bytes.NewBufferString(stringAux), os.Stdout, "file.name")
+				stringAux = ""
+				skipFound = false
+				yyParse(l)
+				continue
+			}
+			if strings.HasSuffix(eqn,"\\*") {
+				stringAux = eqn
+				stringAux = strings.TrimRight(stringAux,"\\*")
+				skipFound = true
+				continue
+			}
+			fmt.Println(">>", eqn)
+			l := newLexer(bytes.NewBufferString(eqn), os.Stdout, "file.name")
+			yyParse(l)
+			
+		} else {
+			break
+		}
+	}
+}
+
+func Exec(route string) {
+	re, _ := regexp.Compile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.mia`)
+	diskName := re.FindString(route)
+	if len(diskName) == 0 {
+		fmt.Println(">> No file found. Try again.")
+		return
+	}
+	file, err := os.Open(route)
+	if err != nil {
+		fmt.Println(">> Couldn't read file. Try again.")
+		return
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	RunExec(reader)
 }
 
 

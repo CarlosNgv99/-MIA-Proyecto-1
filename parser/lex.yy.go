@@ -173,9 +173,9 @@ yystate2:
 
 yystate3:
 	c = l.Next()
-	yyrule = 24
+	yyrule = 27
 	l.Mark()
-	goto yyrule24
+	goto yyrule27
 
 yystate4:
 	c = l.Next()
@@ -209,12 +209,12 @@ yystate6:
 
 yystate7:
 	c = l.Next()
-	yyrule = 27
+	yyrule = 26
 	l.Mark()
 	switch {
 	default:
-		goto yyrule27
-	case c >= '-' && c <= '9' || c >= 'A' && c <= 'Z' || c == '_' || c >= 'a' && c <= 'z':
+		goto yyrule26
+	case c == ' ' || c >= '.' && c <= '9' || c >= 'A' && c <= 'Z' || c == '_' || c >= 'a' && c <= 'z':
 		goto yystate7
 	}
 
@@ -292,9 +292,9 @@ yystate13:
 
 yystate14:
 	c = l.Next()
-	yyrule = 25
+	yyrule = 24
 	l.Mark()
-	goto yyrule25
+	goto yyrule24
 
 yystate15:
 	c = l.Next()
@@ -316,9 +316,9 @@ yystate16:
 
 yystate17:
 	c = l.Next()
-	yyrule = 26
+	yyrule = 25
 	l.Mark()
-	goto yyrule26
+	goto yyrule25
 
 yystate18:
 	c = l.Next()
@@ -1756,28 +1756,28 @@ yyrule23: // {digit}
 		return digit
 		goto yystate0
 	}
-yyrule24: // {quote}
-	{
-		lval.token = string(l.TokenBytes(nil))
-		return quote
-		goto yystate0
-	}
-yyrule25: // {diskName}
+yyrule24: // {diskName}
 	{
 		lval.token = string(l.TokenBytes(nil))
 		return diskName
 		goto yystate0
 	}
-yyrule26: // {mia_file}
+yyrule25: // {mia_file}
 	{
 		lval.token = string(l.TokenBytes(nil))
 		return mia_file
 		goto yystate0
 	}
-yyrule27: // {route}
+yyrule26: // {route}
 	{
 		lval.token = string(l.TokenBytes(nil))
 		return route
+		goto yystate0
+	}
+yyrule27: // {quote}
+	{
+		lval.token = string(l.TokenBytes(nil))
+		return quote
 		goto yystate0
 	}
 	panic("unreachable")

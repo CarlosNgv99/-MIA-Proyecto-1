@@ -56,7 +56,7 @@ id    {letter}({letter}|{digit})*
 letter        [_a-zA-Z]|{unicodeLetter}
 diskName	  {letter}({letter}|"_"|{digit})*"."dsk
 mia_file	  {letter}({letter}|"_"|{digit})+"."mia
-route         "/"("/"|"-"|"_"|[a-zA-Z0-9]|".")* "/"
+route         "/"("/"|" "|"_"|[a-zA-Z0-9]|".")*
 arrow           "-"">"
 hyphen          "-"
 quote			\"
@@ -88,13 +88,10 @@ fdisk  lval.token = string(l.TokenBytes(nil)); return fdisk
 {hyphen} lval.token = string(l.TokenBytes(nil)); return hyphen
 {arrow} lval.token = string(l.TokenBytes(nil)); return arrow
 {digit} lval.token = string(l.TokenBytes(nil)); return digit
-{quote} lval.token = string(l.TokenBytes(nil)); return quote
 {diskName} lval.token = string(l.TokenBytes(nil)); return diskName
 {mia_file} lval.token = string(l.TokenBytes(nil)); return mia_file
 {route} lval.token = string(l.TokenBytes(nil)); return route
-
-
-
+{quote} lval.token = string(l.TokenBytes(nil)); return quote
 
 %%
 	if c, ok := l.Abort(); ok { return int(c) }

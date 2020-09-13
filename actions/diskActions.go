@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 )
 
 var diskList = []MountedDisk{}
+var unmountList = []Unmount{}
 var idChar = 'a'
 var idNum = 0
 
@@ -41,6 +43,12 @@ type MountedDisk struct {
 type Mount struct {
 	Route string
 	Name  string
+}
+
+// Unmount exported
+type Unmount struct {
+	idn string
+	id  string
 }
 
 // MBR exported
@@ -70,6 +78,24 @@ type EBR struct {
 	Next   int64
 	Name   [16]byte
 }
+
+// Exec exported
+/*func Exec(route string) {
+	re := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.mia`)
+	diskName := re.FindString(route)
+	if len(diskName) == 0 {
+		fmt.Println(">> No file found. Try again.")
+		return
+	}
+	file, err := os.Open(route)
+	if err != nil {
+		fmt.Println("Couldn't read file. Try again.")
+		return
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	parser.RunExec(reader)
+}*/
 
 // CreateDisk exported
 func (d *Disk) CreateDisk() {
@@ -102,12 +128,45 @@ func (m *Mount) SetMountName(name string) {
 	m.Name = name
 }
 
+// SetUnmount exported
+func (u *Unmount) SetUnmount(idn string, id string) {
+	u.id = id
+	u.idn = idn
+	uAux := Unmount{u.idn, u.id}
+	unmountList = append(unmountList, uAux)
+}
+
+// UnmountPartition exported
+func (u *Unmount) UnmountPartition() {
+	i := 0
+	for _, value := range unmountList {
+		for _, disk := range diskList {
+			if value.id == disk.MountID {
+				diskList = append(diskList[:i], diskList[i+1:]...)
+				diskList[len(diskList)-1] = MountedDisk{}
+				fmt.Println(">> Partition unmounted.")
+				return
+			}
+			i++
+		}
+	}
+	fmt.Println(">> Partition does not exist!")
+}
+
 // ShowMountedPartitions exported
 func ShowMountedPartitions() {
+	if len(diskList) == 0 {
+		fmt.Println(">> No mounted partitions yet.")
+		return
+	}
+	fmt.Println(">> MOUNTED PARTITIONS")
+	fmt.Println("******************************************")
 	for _, value := range diskList {
 		fmt.Println(">> DISK NAME:", value.DiskName)
 		fmt.Println(">> PARTITION NAME:", value.PartitionName)
 		fmt.Println(">> PATH:", value.Path)
+		fmt.Println(">> ID:", value.MountID)
+		fmt.Println("******************************************")
 	}
 }
 
@@ -168,7 +227,6 @@ func (m *Mount) SetMount() {
 						MountID:       mountID,
 					}
 					diskList = append(diskList, mountedDisk)
-					fmt.Println(diskList)
 					return
 				}
 			} else {
@@ -188,7 +246,6 @@ func (m *Mount) SetMount() {
 						MountID:       mountID,
 					}
 					diskList = append(diskList, mountedDisk)
-					fmt.Println(diskList)
 					return
 				}
 			}
@@ -209,7 +266,6 @@ func (m *Mount) SetMount() {
 				MountID:       mountID,
 			}
 			diskList = append(diskList, mountedDisk)
-			fmt.Println(diskList)
 			return
 		}
 	}
@@ -222,7 +278,7 @@ func setMountID(diskName string, partitionName string) (int, int64, bool) {
 	var partitionLetter int
 
 	for _, value := range diskList {
-		if partitionName == value.PartitionName {
+		if partitionName == value.PartitionName && diskName == value.DiskName {
 			fmt.Println(">> Partition is already mounted")
 			return 0, 0, false
 		}
@@ -242,7 +298,6 @@ func setMountID(diskName string, partitionName string) (int, int64, bool) {
 		idNum++
 		fmt.Println("NEW DISK!")
 	}
-	fmt.Println(string(partitionLetter), partitionNumber)
 	return (partitionLetter), partitionNumber, true
 }
 
@@ -283,15 +338,18 @@ func (d *Disk) setDisk() {
 	fd, err := os.Create(path)
 	defer fd.Close()
 	if err != nil {
-		log.Fatal(">> Failed to create output")
+		fmt.Println(">> Failed to create disk")
+		return
 	}
 	_, err = fd.Seek(size-1, 0)
 	if err != nil {
-		log.Fatal(">> Failed to seek")
+		fmt.Println(">> Failed to seek")
+		return
 	}
 	_, err = fd.Write([]byte{0})
 	if err != nil {
-		log.Fatal(">> Write failed")
+		fmt.Println(">> Failed writing file.")
+		return
 	}
 
 	newMbr := MBR{}
@@ -410,7 +468,8 @@ func ReadFile(route string) {
 		}
 		fmt.Println()
 	}
-	//mbrGraph(mbr)
+	//GenGraph(route)
+	graphDisk(route)
 }
 
 func readBytes(file *os.File, size int) []byte {
@@ -430,8 +489,9 @@ func randomNumber() int64 {
 func RemoveDisk(path string) {
 	re := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.dsk`)
 	file := re.FindString(path)
+	fmt.Println(">> ¿Desea eliminar este disco?")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
 	err := os.Remove(path)
-	fmt.Println(file)
 	if err != nil {
 		fmt.Println(">> File does not exist.")
 	} else {
@@ -627,7 +687,7 @@ func (f *FDISK) getDisk(route string) {
 		for i := 0; i < 4; i++ {
 			if mbr.Partitions[i].Type == byte('E') {
 				if f.Size > mbr.Partitions[i].Size {
-					fmt.Println(">> Logic partition size is bigger than extended partition. Try again.")
+					fmt.Println(">> Logical partition size is bigger than extended partition. Try again.")
 					return
 				}
 				// NEW EBR
@@ -639,6 +699,7 @@ func (f *FDISK) getDisk(route string) {
 				ebr.Next = -1
 				mbr.Partitions[i].Size = mbr.Partitions[i].Size - ebr.Size
 				// Searching for ebr in extended partition
+				fmt.Println("SIZE GETDISK:", mbr.Partitions[i].Size)
 				file.Seek(positionAux, 0)
 
 				if mbr.Partitions[i].Size < 0 {
@@ -1093,13 +1154,27 @@ func (f *FDISK) addSize() {
 	fmt.Println(">> Couln't find any coincidence.")
 }
 
-func mbrGraph(mbr MBR) {
+// GenGraph exported
+func GenGraph(route string) {
+
 	cont := 4
 	f, err := os.Create("mbr.txt")
 	defer f.Close()
 	if err != nil {
 		fmt.Println(">> Error drawing graph!")
 	}
+
+	file, err := os.Open(route)
+	defer file.Close()
+	if err != nil {
+		fmt.Println(">> Error reading the file. Try again.")
+		return
+	}
+	mbr := MBR{}
+	size := int(unsafe.Sizeof(mbr))
+	data := readBytes(file, size)
+	buff := bytes.NewBuffer(data)
+	_ = binary.Read(buff, binary.BigEndian, &mbr)
 
 	f.WriteString("digraph H { \n node [shape=plaintext];\n")
 	f.WriteString(" B [ label=< <TABLE BORDER =\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">\n")
@@ -1112,13 +1187,17 @@ func mbrGraph(mbr MBR) {
 	f.WriteString("<TR><TD PORT=\"3\">MBR_SIGNATURE</TD><TD> " + strconv.Itoa(int(mbr.Signature)) + "</TD></TR>\n")
 
 	for i := 0; i < 4; i++ {
+		if mbr.Partitions[i].Type == 0 {
+			continue
+		}
 		status := mbr.Partitions[i].Status
 		tpe := mbr.Partitions[i].Type
 		fit := mbr.Partitions[i].Fit
-		name := (mbr.Partitions[i].Name[:16])
+		n := bytes.Index(mbr.Partitions[i].Name[:], []byte{0})
+		name := mbr.Partitions[i].Name[:n]
 		size := mbr.Partitions[i].Size
 
-		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION</TD><TD>" + strconv.Itoa(i) + "</TD></TR>\n")
+		f.WriteString("<TR><TD  bgcolor='cyan' PORT=\"" + strconv.Itoa(cont) + "\">PARTITION</TD><TD bgcolor='cyan' >" + strconv.Itoa(i) + "</TD></TR>\n")
 		cont++
 		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_NAME</TD><TD>" + string(name) + "</TD></TR>\n")
 		cont++
@@ -1132,13 +1211,161 @@ func mbrGraph(mbr MBR) {
 		cont++
 		f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_START</TD><TD>" + strconv.Itoa(int(mbr.Partitions[i].Start)) + "</TD></TR>\n")
 		cont++
+		if mbr.Partitions[i].Type == 'E' {
+			file.Seek(mbr.Partitions[i].Start, 0)
+			ebr := EBR{}
+			sizeEbr := binary.Size(ebr)
+			dataEbr := readBytes(file, sizeEbr)
+			ebrBuff := bytes.NewBuffer(dataEbr)
+			_ = binary.Read(ebrBuff, binary.BigEndian, &ebr)
+			// Starts writting ebrs
+			j := 1
+			if ebr.Next != -1 {
+				for ebr.Next != -1 {
+					// Iterates ebrs until found the last one
+
+					file.Seek(ebr.Next, 0)
+
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					binary.Read(bufferAux, binary.BigEndian, &ebr)
+					fmt.Println(" *Logical ", j)
+					f.WriteString("<TR><TD bgcolor='yellow' PORT=\"" + strconv.Itoa(cont) + "\">LOG. PARTITION</TD><TD bgcolor='yellow'>" + strconv.Itoa(j) + "</TD></TR>\n")
+					cont++
+
+					fmt.Println("  Nombre " + string(ebr.Name[:]))
+					l := bytes.Index(mbr.Partitions[i].Name[:], []byte{0})
+					name := ebr.Name[:l]
+					f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">NAME</TD><TD>" + string(name) + "</TD></TR>\n")
+					cont++
+
+					fmt.Println("  Start:", ebr.Start)
+					f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">START</TD><TD>" + strconv.Itoa(int(ebr.Start)) + "</TD></TR>\n")
+					cont++
+
+					fmt.Println("  Next:", ebr.Next)
+					f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">NEXT</TD><TD>" + strconv.Itoa(int(ebr.Next)) + "</TD></TR>\n")
+					cont++
+
+					fmt.Println("  Size ", ebr.Size)
+					f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">SIZE</TD><TD>" + strconv.Itoa(int(ebr.Size)) + "</TD></TR>\n")
+					cont++
+
+					f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_FIT</TD><TD>" + string(ebr.Fit) + "</TD></TR>\n")
+					cont++
+
+					f.WriteString("<TR><TD PORT=\"" + strconv.Itoa(cont) + "\">PARTITION_STATUS</TD><TD>" + string(ebr.Status) + "</TD></TR>\n")
+					cont++
+
+					j++
+					if j == 24 {
+						fmt.Println(">> You have created the maximum logical partitions available.")
+						return
+					}
+				}
+			}
+
+		}
 	}
 
 	f.WriteString("</TABLE> >];\n")
 	f.WriteString("}")
 
-	e := exec.Command("dot", "-Tpng", "/home/carlosngv/mbr.txt", "-o", "/home/carlosngv/mbr.png")
+	e := exec.Command("dot", "-Tpng", "mbr.txt", "-o", "mbr.png")
 	if er := e.Run(); er != nil {
 		fmt.Println(">> Error", er)
+		return
+	}
+
+	// ENDS GRAPHVIZ
+}
+
+func graphDisk(route string) {
+	f, err := os.Create("disk.txt")
+	defer f.Close()
+	if err != nil {
+		fmt.Println(">> Error drawing graph!")
+	}
+	file, err := os.Open(route)
+	defer file.Close()
+	if err != nil {
+		fmt.Println(">> Error reading the file. Try again.")
+		return
+	}
+	mbr := MBR{}
+	size := int(unsafe.Sizeof(mbr))
+	data := readBytes(file, size)
+	buff := bytes.NewBuffer(data)
+	_ = binary.Read(buff, binary.BigEndian, &mbr)
+	f.WriteString("digraph H { \n")
+	f.WriteString(" B[ shape=plaintext label=< <table BORDER =\"1\" CELLBORDER=\"1\" CELLSPACING=\"2\"><tr>\n")
+
+	f.WriteString("<td height = \"100\" >MBR</td>\n")
+	for i := 0; i < 4; i++ {
+		l := bytes.Index(mbr.Partitions[i].Name[:], []byte{0})
+		name := mbr.Partitions[i].Name[:l]
+		if mbr.Partitions[i].Type == 'E' {
+			file.Seek(mbr.Partitions[i].Start, 0)
+			ebr := EBR{}
+			sizeEbr := binary.Size(ebr)
+			dataEbr := readBytes(file, sizeEbr)
+			ebrBuff := bytes.NewBuffer(dataEbr)
+			_ = binary.Read(ebrBuff, binary.BigEndian, &ebr)
+			f.WriteString("<td height = '100'>\n")
+			f.WriteString("<table cellspacing='2'>\n")
+			f.WriteString("<tr>\n<td height = '50' colspan='18'>" + string(name) + " (" + strconv.Itoa(int(mbr.Partitions[i].Size)) + " bytes)</td>\n</tr>\n")
+			f.WriteString("<tr>\n")
+
+			j := 2
+			if ebr.Next == -1 {
+				r := bytes.Index(ebr.Name[:], []byte{0})
+				nameEbr := ebr.Name[:r]
+				f.WriteString("<td height = '30'> EBR" + strconv.Itoa(1) + "</td>\n")
+				f.WriteString("<td height = '30'>" + string(nameEbr) + "</td>\n")
+				f.WriteString("<td width='100%'>FREE</td>\n")
+
+				f.WriteString("</tr>\n")
+				f.WriteString("</table>\n")
+				f.WriteString("</td>\n")
+
+			} else {
+				r := bytes.Index(ebr.Name[:], []byte{0})
+				nameEbr := ebr.Name[:r]
+				f.WriteString("<td height = '30'> EBR" + strconv.Itoa(1) + "</td>\n")
+				f.WriteString("<td height = '30'>" + string(nameEbr) + "</td>\n")
+			}
+			if ebr.Next != -1 {
+				for ebr.Next != -1 {
+					// Iterates ebrs until found the last one
+					file.Seek(ebr.Next, 0)
+					ebrData := readBytes(file, sizeEbr)
+					bufferAux := bytes.NewBuffer(ebrData)
+					binary.Read(bufferAux, binary.BigEndian, &ebr)
+					r := bytes.Index(ebr.Name[:], []byte{0})
+					nameEbr := ebr.Name[:r]
+					f.WriteString("<td height = '30'> EBR" + strconv.Itoa(j) + "</td>\n")
+					f.WriteString("<td height = '30'>" + string(nameEbr) + "</td>\n")
+					j++
+				}
+				f.WriteString("</tr>\n")
+				f.WriteString("</table>\n")
+				f.WriteString("</td>\n")
+			}
+
+		} else {
+			if len(string(name)) != 0 || (mbr.Partitions[i].Status != 'F') {
+				f.WriteString("<td height = \"100\">" + string(name) + " (" + strconv.Itoa(int(mbr.Partitions[i].Size)) + " bytes)</td>\n")
+			} else {
+				f.WriteString("<td height = \"100\">FREE</td>\n")
+			}
+
+		}
+	}
+
+	f.WriteString("</tr>\n</table>\n>\n];\n}")
+	e := exec.Command("dot", "-Tpng", "disk.txt", "-o", "disk.png")
+	if er := e.Run(); er != nil {
+		fmt.Println(">> Error", er)
+		return
 	}
 }
