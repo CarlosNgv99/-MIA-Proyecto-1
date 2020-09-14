@@ -1,0 +1,23 @@
+digraph H { 
+ B[ shape=plaintext label=< <table BORDER ="1" CELLBORDER="1" CELLSPACING="2"><tr>
+<td height = "100" >MBR</td>
+<td height = '100'>
+<table cellspacing='2'>
+<tr>
+<td height = '50' colspan='18'>extended (1028096 bytes)</td>
+</tr>
+<tr>
+<td height = '30'> EBR1</td>
+<td height = '30'>logical1</td>
+<td width='100%'>FREE</td>
+</tr>
+</table>
+</td>
+<td height = "100">FREE</td>
+<td height = "100">FREE</td>
+<td height = "100">FREE</td>
+</tr>
+</table>
+>
+];
+}

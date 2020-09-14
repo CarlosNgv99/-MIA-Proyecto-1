@@ -1,0 +1,17 @@
+digraph H { 
+ node [shape=plaintext];
+ B [ label=< <TABLE BORDER ="0" CELLBORDER="1" CELLSPACING="0">
+<TR PORT="header"><TD COLSPAN="2">MBR</TD></TR>
+<TR><TD>Name</TD><TD>Value</TD></TR>
+<TR><TD PORT="1">MBR_SIZE</TD><TD> 9437184 bytes</TD></TR>
+<TR><TD PORT="2">MBR_CREATED_AT</TD><TD>  2020-09-12 17:59:47</TD></TR>
+<TR><TD PORT="3">MBR_SIGNATURE</TD><TD> 197</TD></TR>
+<TR><TD  bgcolor='cyan' PORT="4">PARTITION</TD><TD bgcolor='cyan' >0</TD></TR>
+<TR><TD PORT="5">PARTITION_NAME</TD><TD>extended</TD></TR>
+<TR><TD PORT="6">PARTITION_SIZE</TD><TD>1028096</TD></TR>
+<TR><TD PORT="7">PARTITION_STATUS</TD><TD>T</TD></TR>
+<TR><TD PORT="8">PARTITION_TYPE</TD><TD>E</TD></TR>
+<TR><TD PORT="9">PARTITION_FIT</TD><TD>B</TD></TR>
+<TR><TD PORT="10">PARTITION_START</TD><TD>177</TD></TR>
+</TABLE> >];
+}

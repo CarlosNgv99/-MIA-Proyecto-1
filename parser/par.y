@@ -17,6 +17,7 @@ var newPartition actions.Partition = actions.Partition{}
 var newFDisk actions.FDISK = actions.FDISK{}
 var newMount actions.Mount = actions.Mount{}
 var newUnmount actions.Unmount = actions.Unmount{}
+var newRep actions.Rep = actions.Rep{}
 var stringAux string = ""
 var skipFound bool = false
 
@@ -81,8 +82,10 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %token <token> tpe
 %token <token> unit
 %token <token> unmount
+%token <token> rep
 %token <token> read
 %token <token> route
+%token <token> ruta
 %token <token> quote
 
 
@@ -117,8 +120,10 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <token> tpe
 %type <token> unit
 %type <token> unmount
+%type <token> rep
 %type <token> read
 %type <token> route
+%type <token> ruta
 %type <token> quote
 
 
@@ -141,7 +146,9 @@ func (n node) append(nn...node) node { n.children = append(n.children, nn...); r
 %type <node> INSTRUCTION
 %type <node> INSTRUCTIONS
 %type <node> READ
-
+%type <node> REP 
+%type <node> REPO
+%type <node> REPT
 
 
 %%
@@ -160,6 +167,7 @@ INSTRUCTION: MOUNT
 			| MKFS
 			| PAUSE
 			| READ
+			| REP
 			;
 
 PAUSE: pause { actions.PauseAction() };
@@ -182,6 +190,23 @@ MKDISKT: hyphen size arrow digit { newDisk.SetDiskSize($4) }
 | hyphen path arrow quote route quote { newDisk.SetDiskRoute($5) }
 | hyphen unit arrow id { newDisk.SetDiskUnit($4) }
 ;
+
+
+REP: rep REPO { 
+	newRep.CreateRep()
+	newRep = actions.Rep{}
+}
+
+REPO: REPT
+	| REPO REPT EMPTY;
+
+REPT:hyphen id arrow id  { newRep.SetRepID($4) }
+	| hyphen name arrow id { newRep.SetRepName($4) }
+	| hyphen path arrow quote route quote { newRep.SetRepPath($5) }
+	| hyphen path arrow route { newRep.SetRepPath($4) }
+	| hyphen ruta arrow quote route quote { newRep.SetRepRoute($5) }
+	| hyphen ruta arrow route { newRep.SetRepRoute($4) }
+	;
 
 
 

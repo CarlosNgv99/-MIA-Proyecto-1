@@ -2,15 +2,16 @@
 state 0
 	$accept: .start $end 
 
-	exec  shift 15
-	fdisk  shift 18
-	mount  shift 13
-	mkfs  shift 19
-	mkdisk  shift 16
-	pause  shift 20
-	rmdisk  shift 17
-	unmount  shift 14
-	read  shift 21
+	exec  shift 16
+	fdisk  shift 19
+	mount  shift 14
+	mkfs  shift 20
+	mkdisk  shift 17
+	pause  shift 21
+	rmdisk  shift 18
+	unmount  shift 15
+	rep  shift 23
+	read  shift 22
 	.  error
 
 	MOUNT  goto 4
@@ -24,6 +25,7 @@ state 0
 	INSTRUCTION  goto 3
 	INSTRUCTIONS  goto 2
 	READ  goto 12
+	REP  goto 13
 	start  goto 1
 
 state 1
@@ -37,16 +39,17 @@ state 2
 	start:  INSTRUCTIONS.    (1)
 	INSTRUCTIONS:  INSTRUCTIONS.INSTRUCTION 
 
-	exec  shift 15
-	fdisk  shift 18
-	mount  shift 13
-	mkfs  shift 19
-	mkdisk  shift 16
-	pause  shift 20
-	rmdisk  shift 17
-	unmount  shift 14
-	read  shift 21
-	.  reduce 1 (src line 149)
+	exec  shift 16
+	fdisk  shift 19
+	mount  shift 14
+	mkfs  shift 20
+	mkdisk  shift 17
+	pause  shift 21
+	rmdisk  shift 18
+	unmount  shift 15
+	rep  shift 23
+	read  shift 22
+	.  reduce 1 (src line 156)
 
 	MOUNT  goto 4
 	PAUSE  goto 11
@@ -56,252 +59,268 @@ state 2
 	RMDISK  goto 8
 	FDISK  goto 9
 	MKFS  goto 10
-	INSTRUCTION  goto 22
+	INSTRUCTION  goto 24
 	READ  goto 12
+	REP  goto 13
 
 state 3
 	INSTRUCTIONS:  INSTRUCTION.    (2)
 
-	.  reduce 2 (src line 151)
+	.  reduce 2 (src line 158)
 
 
 state 4
 	INSTRUCTION:  MOUNT.    (4)
 
-	.  reduce 4 (src line 154)
+	.  reduce 4 (src line 161)
 
 
 state 5
 	INSTRUCTION:  UNMOUNT.    (5)
 
-	.  reduce 5 (src line 155)
+	.  reduce 5 (src line 162)
 
 
 state 6
 	INSTRUCTION:  EXEC.    (6)
 
-	.  reduce 6 (src line 156)
+	.  reduce 6 (src line 163)
 
 
 state 7
 	INSTRUCTION:  MKDISK.    (7)
 
-	.  reduce 7 (src line 157)
+	.  reduce 7 (src line 164)
 
 
 state 8
 	INSTRUCTION:  RMDISK.    (8)
 
-	.  reduce 8 (src line 158)
+	.  reduce 8 (src line 165)
 
 
 state 9
 	INSTRUCTION:  FDISK.    (9)
 
-	.  reduce 9 (src line 159)
+	.  reduce 9 (src line 166)
 
 
 state 10
 	INSTRUCTION:  MKFS.    (10)
 
-	.  reduce 10 (src line 160)
+	.  reduce 10 (src line 167)
 
 
 state 11
 	INSTRUCTION:  PAUSE.    (11)
 
-	.  reduce 11 (src line 161)
+	.  reduce 11 (src line 168)
 
 
 state 12
 	INSTRUCTION:  READ.    (12)
 
-	.  reduce 12 (src line 162)
+	.  reduce 12 (src line 169)
 
 
 state 13
-	MOUNT:  mount.MOUNTO 
-	MOUNT:  mount.    (25)
+	INSTRUCTION:  REP.    (13)
 
-	hyphen  shift 25
-	.  reduce 25 (src line 192)
+	.  reduce 13 (src line 170)
 
-	MOUNTO  goto 23
-	MOUNTT  goto 24
 
 state 14
-	UNMOUNT:  unmount.UNMOUNTO 
+	MOUNT:  mount.MOUNTO 
+	MOUNT:  mount.    (35)
 
-	hyphen  shift 28
-	.  error
+	hyphen  shift 27
+	.  reduce 35 (src line 217)
 
-	UNMOUNTO  goto 26
-	UNMOUNTT  goto 27
+	MOUNTO  goto 25
+	MOUNTT  goto 26
 
 state 15
-	EXEC:  exec.hyphen path arrow route 
+	UNMOUNT:  unmount.UNMOUNTO 
 
-	hyphen  shift 29
+	hyphen  shift 30
 	.  error
 
+	UNMOUNTO  goto 28
+	UNMOUNTT  goto 29
 
 state 16
-	MKDISK:  mkdisk.MKDISKO 
+	EXEC:  exec.hyphen path arrow route 
 
-	hyphen  shift 32
+	hyphen  shift 31
 	.  error
 
-	MKDISKO  goto 30
-	MKDISKT  goto 31
 
 state 17
-	RMDISK:  rmdisk.hyphen path arrow quote route quote 
+	MKDISK:  mkdisk.MKDISKO 
 
-	hyphen  shift 33
+	hyphen  shift 34
 	.  error
 
+	MKDISKO  goto 32
+	MKDISKT  goto 33
 
 state 18
-	FDISK:  fdisk.FDISKO 
+	RMDISK:  rmdisk.hyphen path arrow quote route quote 
 
-	hyphen  shift 36
+	hyphen  shift 35
 	.  error
 
-	FDISKO  goto 34
-	FDISKT  goto 35
 
 state 19
+	FDISK:  fdisk.FDISKO 
+
+	hyphen  shift 38
+	.  error
+
+	FDISKO  goto 36
+	FDISKT  goto 37
+
+state 20
 	MKFS:  mkfs.hyphen id arrow idn 
 	MKFS:  mkfs.hyphen id arrow idn hyphen tpe arrow id 
 
-	hyphen  shift 37
+	hyphen  shift 39
 	.  error
-
-
-state 20
-	PAUSE:  pause.    (13)
-
-	.  reduce 13 (src line 165)
 
 
 state 21
-	READ:  read.arrow route 
+	PAUSE:  pause.    (14)
 
-	arrow  shift 38
-	.  error
+	.  reduce 14 (src line 173)
 
 
 state 22
-	INSTRUCTIONS:  INSTRUCTIONS INSTRUCTION.    (3)
+	READ:  read.arrow route 
 
-	.  reduce 3 (src line 152)
+	arrow  shift 40
+	.  error
 
 
 state 23
-	MOUNT:  mount MOUNTO.    (24)
-	MOUNTO:  MOUNTO.MOUNTT EMPTY 
+	REP:  rep.REPO 
 
-	hyphen  shift 25
-	.  reduce 24 (src line 188)
+	hyphen  shift 43
+	.  error
 
-	MOUNTT  goto 39
+	REPO  goto 41
+	REPT  goto 42
 
 state 24
-	MOUNTO:  MOUNTT.    (26)
+	INSTRUCTIONS:  INSTRUCTIONS INSTRUCTION.    (3)
 
-	.  reduce 26 (src line 194)
+	.  reduce 3 (src line 159)
 
 
 state 25
+	MOUNT:  mount MOUNTO.    (34)
+	MOUNTO:  MOUNTO.MOUNTT EMPTY 
+
+	hyphen  shift 27
+	.  reduce 34 (src line 213)
+
+	MOUNTT  goto 44
+
+state 26
+	MOUNTO:  MOUNTT.    (36)
+
+	.  reduce 36 (src line 219)
+
+
+state 27
 	MOUNTT:  hyphen.path arrow quote route quote 
 	MOUNTT:  hyphen.name arrow id 
 
-	name  shift 41
-	path  shift 40
+	name  shift 46
+	path  shift 45
 	.  error
-
-
-state 26
-	UNMOUNT:  unmount UNMOUNTO.    (30)
-	UNMOUNTO:  UNMOUNTO.UNMOUNTT EMPTY 
-
-	hyphen  shift 28
-	.  reduce 30 (src line 200)
-
-	UNMOUNTT  goto 42
-
-state 27
-	UNMOUNTO:  UNMOUNTT.    (31)
-
-	.  reduce 31 (src line 205)
 
 
 state 28
-	UNMOUNTT:  hyphen.id arrow id 
+	UNMOUNT:  unmount UNMOUNTO.    (40)
+	UNMOUNTO:  UNMOUNTO.UNMOUNTT EMPTY 
 
-	id  shift 43
-	.  error
+	hyphen  shift 30
+	.  reduce 40 (src line 225)
 
+	UNMOUNTT  goto 47
 
 state 29
-	EXEC:  exec hyphen.path arrow route 
+	UNMOUNTO:  UNMOUNTT.    (41)
 
-	path  shift 44
-	.  error
+	.  reduce 41 (src line 230)
 
 
 state 30
-	MKDISK:  mkdisk MKDISKO.    (16)
-	MKDISKO:  MKDISKO.MKDISKT EMPTY 
+	UNMOUNTT:  hyphen.id arrow id 
 
-	hyphen  shift 32
-	.  reduce 16 (src line 171)
+	id  shift 48
+	.  error
 
-	MKDISKT  goto 45
 
 state 31
-	MKDISKO:  MKDISKT.    (17)
+	EXEC:  exec hyphen.path arrow route 
 
-	.  reduce 17 (src line 176)
+	path  shift 49
+	.  error
 
 
 state 32
+	MKDISK:  mkdisk MKDISKO.    (17)
+	MKDISKO:  MKDISKO.MKDISKT EMPTY 
+
+	hyphen  shift 34
+	.  reduce 17 (src line 179)
+
+	MKDISKT  goto 50
+
+state 33
+	MKDISKO:  MKDISKT.    (18)
+
+	.  reduce 18 (src line 184)
+
+
+state 34
 	MKDISKT:  hyphen.size arrow digit 
 	MKDISKT:  hyphen.path arrow route 
 	MKDISKT:  hyphen.name arrow diskName 
 	MKDISKT:  hyphen.path arrow quote route quote 
 	MKDISKT:  hyphen.unit arrow id 
 
-	name  shift 48
-	path  shift 47
-	size  shift 46
-	unit  shift 49
+	name  shift 53
+	path  shift 52
+	size  shift 51
+	unit  shift 54
 	.  error
 
-
-state 33
-	RMDISK:  rmdisk hyphen.path arrow quote route quote 
-
-	path  shift 50
-	.  error
-
-
-state 34
-	FDISK:  fdisk FDISKO.    (34)
-	FDISKO:  FDISKO.FDISKT EMPTY 
-
-	hyphen  shift 36
-	.  reduce 34 (src line 210)
-
-	FDISKT  goto 51
 
 state 35
-	FDISKO:  FDISKT.    (35)
+	RMDISK:  rmdisk hyphen.path arrow quote route quote 
 
-	.  reduce 35 (src line 217)
+	path  shift 55
+	.  error
 
 
 state 36
+	FDISK:  fdisk FDISKO.    (44)
+	FDISKO:  FDISKO.FDISKT EMPTY 
+
+	hyphen  shift 38
+	.  reduce 44 (src line 235)
+
+	FDISKT  goto 56
+
+state 37
+	FDISKO:  FDISKT.    (45)
+
+	.  reduce 45 (src line 242)
+
+
+state 38
 	FDISKT:  hyphen.unit arrow id 
 	FDISKT:  hyphen.tpe arrow id 
 	FDISKT:  hyphen.fit arrow id 
@@ -312,568 +331,738 @@ state 36
 	FDISKT:  hyphen.path arrow quote route quote 
 	FDISKT:  hyphen.path arrow route 
 
-	add  shift 56
-	delete  shift 55
-	fit  shift 54
-	name  shift 58
-	path  shift 59
-	size  shift 57
-	tpe  shift 53
-	unit  shift 52
-	.  error
-
-
-state 37
-	MKFS:  mkfs hyphen.id arrow idn 
-	MKFS:  mkfs hyphen.id arrow idn hyphen tpe arrow id 
-
-	id  shift 60
-	.  error
-
-
-state 38
-	READ:  read arrow.route 
-
-	route  shift 61
+	add  shift 61
+	delete  shift 60
+	fit  shift 59
+	name  shift 63
+	path  shift 64
+	size  shift 62
+	tpe  shift 58
+	unit  shift 57
 	.  error
 
 
 state 39
-	MOUNTO:  MOUNTO MOUNTT.EMPTY 
-	EMPTY: .    (49)
+	MKFS:  mkfs hyphen.id arrow idn 
+	MKFS:  mkfs hyphen.id arrow idn hyphen tpe arrow id 
 
-	.  reduce 49 (src line 241)
+	id  shift 65
+	.  error
 
-	EMPTY  goto 62
 
 state 40
-	MOUNTT:  hyphen path.arrow quote route quote 
+	READ:  read arrow.route 
 
-	arrow  shift 63
+	route  shift 66
 	.  error
 
 
 state 41
-	MOUNTT:  hyphen name.arrow id 
+	REP:  rep REPO.    (25)
+	REPO:  REPO.REPT EMPTY 
 
-	arrow  shift 64
-	.  error
+	hyphen  shift 43
+	.  reduce 25 (src line 195)
 
+	REPT  goto 67
 
 state 42
-	UNMOUNTO:  UNMOUNTO UNMOUNTT.EMPTY 
-	EMPTY: .    (49)
+	REPO:  REPT.    (26)
 
-	.  reduce 49 (src line 241)
+	.  reduce 26 (src line 200)
 
-	EMPTY  goto 65
 
 state 43
-	UNMOUNTT:  hyphen id.arrow id 
+	REPT:  hyphen.id arrow id 
+	REPT:  hyphen.name arrow id 
+	REPT:  hyphen.path arrow quote route quote 
+	REPT:  hyphen.path arrow route 
+	REPT:  hyphen.ruta arrow quote route quote 
+	REPT:  hyphen.ruta arrow route 
 
-	arrow  shift 66
+	id  shift 68
+	name  shift 69
+	path  shift 70
+	ruta  shift 71
 	.  error
 
 
 state 44
-	EXEC:  exec hyphen path.arrow route 
+	MOUNTO:  MOUNTO MOUNTT.EMPTY 
+	EMPTY: .    (59)
 
-	arrow  shift 67
-	.  error
+	.  reduce 59 (src line 266)
 
+	EMPTY  goto 72
 
 state 45
-	MKDISKO:  MKDISKO MKDISKT.EMPTY 
-	EMPTY: .    (49)
-
-	.  reduce 49 (src line 241)
-
-	EMPTY  goto 68
-
-state 46
-	MKDISKT:  hyphen size.arrow digit 
-
-	arrow  shift 69
-	.  error
-
-
-state 47
-	MKDISKT:  hyphen path.arrow route 
-	MKDISKT:  hyphen path.arrow quote route quote 
-
-	arrow  shift 70
-	.  error
-
-
-state 48
-	MKDISKT:  hyphen name.arrow diskName 
-
-	arrow  shift 71
-	.  error
-
-
-state 49
-	MKDISKT:  hyphen unit.arrow id 
-
-	arrow  shift 72
-	.  error
-
-
-state 50
-	RMDISK:  rmdisk hyphen path.arrow quote route quote 
+	MOUNTT:  hyphen path.arrow quote route quote 
 
 	arrow  shift 73
 	.  error
 
 
-state 51
-	FDISKO:  FDISKO FDISKT.EMPTY 
-	EMPTY: .    (49)
+state 46
+	MOUNTT:  hyphen name.arrow id 
 
-	.  reduce 49 (src line 241)
-
-	EMPTY  goto 74
-
-state 52
-	FDISKT:  hyphen unit.arrow id 
-
-	arrow  shift 75
+	arrow  shift 74
 	.  error
 
 
-state 53
-	FDISKT:  hyphen tpe.arrow id 
+state 47
+	UNMOUNTO:  UNMOUNTO UNMOUNTT.EMPTY 
+	EMPTY: .    (59)
+
+	.  reduce 59 (src line 266)
+
+	EMPTY  goto 75
+
+state 48
+	UNMOUNTT:  hyphen id.arrow id 
 
 	arrow  shift 76
 	.  error
 
 
-state 54
-	FDISKT:  hyphen fit.arrow id 
+state 49
+	EXEC:  exec hyphen path.arrow route 
 
 	arrow  shift 77
 	.  error
 
 
-state 55
-	FDISKT:  hyphen delete.arrow id 
+state 50
+	MKDISKO:  MKDISKO MKDISKT.EMPTY 
+	EMPTY: .    (59)
 
-	arrow  shift 78
-	.  error
+	.  reduce 59 (src line 266)
 
+	EMPTY  goto 78
 
-state 56
-	FDISKT:  hyphen add.arrow digit 
+state 51
+	MKDISKT:  hyphen size.arrow digit 
 
 	arrow  shift 79
 	.  error
 
 
-state 57
-	FDISKT:  hyphen size.arrow digit 
+state 52
+	MKDISKT:  hyphen path.arrow route 
+	MKDISKT:  hyphen path.arrow quote route quote 
 
 	arrow  shift 80
 	.  error
 
 
-state 58
-	FDISKT:  hyphen name.arrow id 
+state 53
+	MKDISKT:  hyphen name.arrow diskName 
 
 	arrow  shift 81
 	.  error
 
 
-state 59
-	FDISKT:  hyphen path.arrow quote route quote 
-	FDISKT:  hyphen path.arrow route 
+state 54
+	MKDISKT:  hyphen unit.arrow id 
 
 	arrow  shift 82
 	.  error
 
 
-state 60
-	MKFS:  mkfs hyphen id.arrow idn 
-	MKFS:  mkfs hyphen id.arrow idn hyphen tpe arrow id 
+state 55
+	RMDISK:  rmdisk hyphen path.arrow quote route quote 
 
 	arrow  shift 83
 	.  error
 
 
-state 61
-	READ:  read arrow route.    (14)
+state 56
+	FDISKO:  FDISKO FDISKT.EMPTY 
+	EMPTY: .    (59)
 
-	.  reduce 14 (src line 167)
+	.  reduce 59 (src line 266)
+
+	EMPTY  goto 84
+
+state 57
+	FDISKT:  hyphen unit.arrow id 
+
+	arrow  shift 85
+	.  error
+
+
+state 58
+	FDISKT:  hyphen tpe.arrow id 
+
+	arrow  shift 86
+	.  error
+
+
+state 59
+	FDISKT:  hyphen fit.arrow id 
+
+	arrow  shift 87
+	.  error
+
+
+state 60
+	FDISKT:  hyphen delete.arrow id 
+
+	arrow  shift 88
+	.  error
+
+
+state 61
+	FDISKT:  hyphen add.arrow digit 
+
+	arrow  shift 89
+	.  error
 
 
 state 62
-	MOUNTO:  MOUNTO MOUNTT EMPTY.    (27)
+	FDISKT:  hyphen size.arrow digit 
 
-	.  reduce 27 (src line 195)
+	arrow  shift 90
+	.  error
 
 
 state 63
-	MOUNTT:  hyphen path arrow.quote route quote 
+	FDISKT:  hyphen name.arrow id 
 
-	quote  shift 84
+	arrow  shift 91
 	.  error
 
 
 state 64
-	MOUNTT:  hyphen name arrow.id 
+	FDISKT:  hyphen path.arrow quote route quote 
+	FDISKT:  hyphen path.arrow route 
 
-	id  shift 85
+	arrow  shift 92
 	.  error
 
 
 state 65
-	UNMOUNTO:  UNMOUNTO UNMOUNTT EMPTY.    (32)
+	MKFS:  mkfs hyphen id.arrow idn 
+	MKFS:  mkfs hyphen id.arrow idn hyphen tpe arrow id 
 
-	.  reduce 32 (src line 206)
+	arrow  shift 93
+	.  error
 
 
 state 66
-	UNMOUNTT:  hyphen id arrow.id 
+	READ:  read arrow route.    (15)
 
-	id  shift 86
-	.  error
+	.  reduce 15 (src line 175)
 
 
 state 67
-	EXEC:  exec hyphen path arrow.route 
+	REPO:  REPO REPT.EMPTY 
+	EMPTY: .    (59)
 
-	route  shift 87
+	.  reduce 59 (src line 266)
+
+	EMPTY  goto 94
+
+state 68
+	REPT:  hyphen id.arrow id 
+
+	arrow  shift 95
 	.  error
 
 
-state 68
-	MKDISKO:  MKDISKO MKDISKT EMPTY.    (18)
-
-	.  reduce 18 (src line 177)
-
-
 state 69
-	MKDISKT:  hyphen size arrow.digit 
+	REPT:  hyphen name.arrow id 
 
-	digit  shift 88
+	arrow  shift 96
 	.  error
 
 
 state 70
-	MKDISKT:  hyphen path arrow.route 
-	MKDISKT:  hyphen path arrow.quote route quote 
+	REPT:  hyphen path.arrow quote route quote 
+	REPT:  hyphen path.arrow route 
 
-	route  shift 89
-	quote  shift 90
+	arrow  shift 97
 	.  error
 
 
 state 71
-	MKDISKT:  hyphen name arrow.diskName 
+	REPT:  hyphen ruta.arrow quote route quote 
+	REPT:  hyphen ruta.arrow route 
 
-	diskName  shift 91
+	arrow  shift 98
 	.  error
 
 
 state 72
-	MKDISKT:  hyphen unit arrow.id 
+	MOUNTO:  MOUNTO MOUNTT EMPTY.    (37)
 
-	id  shift 92
-	.  error
+	.  reduce 37 (src line 220)
 
 
 state 73
-	RMDISK:  rmdisk hyphen path arrow.quote route quote 
+	MOUNTT:  hyphen path arrow.quote route quote 
 
-	quote  shift 93
+	quote  shift 99
 	.  error
 
 
 state 74
-	FDISKO:  FDISKO FDISKT EMPTY.    (36)
-
-	.  reduce 36 (src line 218)
-
-
-state 75
-	FDISKT:  hyphen unit arrow.id 
-
-	id  shift 94
-	.  error
-
-
-state 76
-	FDISKT:  hyphen tpe arrow.id 
-
-	id  shift 95
-	.  error
-
-
-state 77
-	FDISKT:  hyphen fit arrow.id 
-
-	id  shift 96
-	.  error
-
-
-state 78
-	FDISKT:  hyphen delete arrow.id 
-
-	id  shift 97
-	.  error
-
-
-state 79
-	FDISKT:  hyphen add arrow.digit 
-
-	digit  shift 98
-	.  error
-
-
-state 80
-	FDISKT:  hyphen size arrow.digit 
-
-	digit  shift 99
-	.  error
-
-
-state 81
-	FDISKT:  hyphen name arrow.id 
+	MOUNTT:  hyphen name arrow.id 
 
 	id  shift 100
 	.  error
 
 
-state 82
-	FDISKT:  hyphen path arrow.quote route quote 
-	FDISKT:  hyphen path arrow.route 
+state 75
+	UNMOUNTO:  UNMOUNTO UNMOUNTT EMPTY.    (42)
+
+	.  reduce 42 (src line 231)
+
+
+state 76
+	UNMOUNTT:  hyphen id arrow.id 
+
+	id  shift 101
+	.  error
+
+
+state 77
+	EXEC:  exec hyphen path arrow.route 
 
 	route  shift 102
-	quote  shift 101
+	.  error
+
+
+state 78
+	MKDISKO:  MKDISKO MKDISKT EMPTY.    (19)
+
+	.  reduce 19 (src line 185)
+
+
+state 79
+	MKDISKT:  hyphen size arrow.digit 
+
+	digit  shift 103
+	.  error
+
+
+state 80
+	MKDISKT:  hyphen path arrow.route 
+	MKDISKT:  hyphen path arrow.quote route quote 
+
+	route  shift 104
+	quote  shift 105
+	.  error
+
+
+state 81
+	MKDISKT:  hyphen name arrow.diskName 
+
+	diskName  shift 106
+	.  error
+
+
+state 82
+	MKDISKT:  hyphen unit arrow.id 
+
+	id  shift 107
 	.  error
 
 
 state 83
-	MKFS:  mkfs hyphen id arrow.idn 
-	MKFS:  mkfs hyphen id arrow.idn hyphen tpe arrow id 
+	RMDISK:  rmdisk hyphen path arrow.quote route quote 
 
-	idn  shift 103
+	quote  shift 108
 	.  error
 
 
 state 84
-	MOUNTT:  hyphen path arrow quote.route quote 
+	FDISKO:  FDISKO FDISKT EMPTY.    (46)
 
-	route  shift 104
-	.  error
+	.  reduce 46 (src line 243)
 
 
 state 85
-	MOUNTT:  hyphen name arrow id.    (29)
+	FDISKT:  hyphen unit arrow.id 
 
-	.  reduce 29 (src line 198)
+	id  shift 109
+	.  error
 
 
 state 86
-	UNMOUNTT:  hyphen id arrow id.    (33)
+	FDISKT:  hyphen tpe arrow.id 
 
-	.  reduce 33 (src line 208)
+	id  shift 110
+	.  error
 
 
 state 87
-	EXEC:  exec hyphen path arrow route.    (15)
+	FDISKT:  hyphen fit arrow.id 
 
-	.  reduce 15 (src line 169)
+	id  shift 111
+	.  error
 
 
 state 88
-	MKDISKT:  hyphen size arrow digit.    (19)
+	FDISKT:  hyphen delete arrow.id 
 
-	.  reduce 19 (src line 179)
+	id  shift 112
+	.  error
 
 
 state 89
-	MKDISKT:  hyphen path arrow route.    (20)
+	FDISKT:  hyphen add arrow.digit 
 
-	.  reduce 20 (src line 180)
+	digit  shift 113
+	.  error
 
 
 state 90
-	MKDISKT:  hyphen path arrow quote.route quote 
+	FDISKT:  hyphen size arrow.digit 
 
-	route  shift 105
+	digit  shift 114
 	.  error
 
 
 state 91
-	MKDISKT:  hyphen name arrow diskName.    (21)
-
-	.  reduce 21 (src line 181)
-
-
-state 92
-	MKDISKT:  hyphen unit arrow id.    (23)
-
-	.  reduce 23 (src line 183)
-
-
-state 93
-	RMDISK:  rmdisk hyphen path arrow quote.route quote 
-
-	route  shift 106
-	.  error
-
-
-state 94
-	FDISKT:  hyphen unit arrow id.    (37)
-
-	.  reduce 37 (src line 220)
-
-
-state 95
-	FDISKT:  hyphen tpe arrow id.    (38)
-
-	.  reduce 38 (src line 221)
-
-
-state 96
-	FDISKT:  hyphen fit arrow id.    (39)
-
-	.  reduce 39 (src line 222)
-
-
-state 97
-	FDISKT:  hyphen delete arrow id.    (40)
-
-	.  reduce 40 (src line 223)
-
-
-state 98
-	FDISKT:  hyphen add arrow digit.    (41)
-
-	.  reduce 41 (src line 224)
-
-
-state 99
-	FDISKT:  hyphen size arrow digit.    (42)
-
-	.  reduce 42 (src line 225)
-
-
-state 100
-	FDISKT:  hyphen name arrow id.    (43)
-
-	.  reduce 43 (src line 226)
-
-
-state 101
-	FDISKT:  hyphen path arrow quote.route quote 
-
-	route  shift 107
-	.  error
-
-
-state 102
-	FDISKT:  hyphen path arrow route.    (45)
-
-	.  reduce 45 (src line 228)
-
-
-state 103
-	MKFS:  mkfs hyphen id arrow idn.    (47)
-	MKFS:  mkfs hyphen id arrow idn.hyphen tpe arrow id 
-
-	hyphen  shift 108
-	.  reduce 47 (src line 237)
-
-
-state 104
-	MOUNTT:  hyphen path arrow quote route.quote 
-
-	quote  shift 109
-	.  error
-
-
-state 105
-	MKDISKT:  hyphen path arrow quote route.quote 
-
-	quote  shift 110
-	.  error
-
-
-state 106
-	RMDISK:  rmdisk hyphen path arrow quote route.quote 
-
-	quote  shift 111
-	.  error
-
-
-state 107
-	FDISKT:  hyphen path arrow quote route.quote 
-
-	quote  shift 112
-	.  error
-
-
-state 108
-	MKFS:  mkfs hyphen id arrow idn hyphen.tpe arrow id 
-
-	tpe  shift 113
-	.  error
-
-
-state 109
-	MOUNTT:  hyphen path arrow quote route quote.    (28)
-
-	.  reduce 28 (src line 197)
-
-
-state 110
-	MKDISKT:  hyphen path arrow quote route quote.    (22)
-
-	.  reduce 22 (src line 182)
-
-
-state 111
-	RMDISK:  rmdisk hyphen path arrow quote route quote.    (46)
-
-	.  reduce 46 (src line 233)
-
-
-state 112
-	FDISKT:  hyphen path arrow quote route quote.    (44)
-
-	.  reduce 44 (src line 227)
-
-
-state 113
-	MKFS:  mkfs hyphen id arrow idn hyphen tpe.arrow id 
-
-	arrow  shift 114
-	.  error
-
-
-state 114
-	MKFS:  mkfs hyphen id arrow idn hyphen tpe arrow.id 
+	FDISKT:  hyphen name arrow.id 
 
 	id  shift 115
 	.  error
 
 
+state 92
+	FDISKT:  hyphen path arrow.quote route quote 
+	FDISKT:  hyphen path arrow.route 
+
+	route  shift 117
+	quote  shift 116
+	.  error
+
+
+state 93
+	MKFS:  mkfs hyphen id arrow.idn 
+	MKFS:  mkfs hyphen id arrow.idn hyphen tpe arrow id 
+
+	idn  shift 118
+	.  error
+
+
+state 94
+	REPO:  REPO REPT EMPTY.    (27)
+
+	.  reduce 27 (src line 201)
+
+
+state 95
+	REPT:  hyphen id arrow.id 
+
+	id  shift 119
+	.  error
+
+
+state 96
+	REPT:  hyphen name arrow.id 
+
+	id  shift 120
+	.  error
+
+
+state 97
+	REPT:  hyphen path arrow.quote route quote 
+	REPT:  hyphen path arrow.route 
+
+	route  shift 122
+	quote  shift 121
+	.  error
+
+
+state 98
+	REPT:  hyphen ruta arrow.quote route quote 
+	REPT:  hyphen ruta arrow.route 
+
+	route  shift 124
+	quote  shift 123
+	.  error
+
+
+state 99
+	MOUNTT:  hyphen path arrow quote.route quote 
+
+	route  shift 125
+	.  error
+
+
+state 100
+	MOUNTT:  hyphen name arrow id.    (39)
+
+	.  reduce 39 (src line 223)
+
+
+state 101
+	UNMOUNTT:  hyphen id arrow id.    (43)
+
+	.  reduce 43 (src line 233)
+
+
+state 102
+	EXEC:  exec hyphen path arrow route.    (16)
+
+	.  reduce 16 (src line 177)
+
+
+state 103
+	MKDISKT:  hyphen size arrow digit.    (20)
+
+	.  reduce 20 (src line 187)
+
+
+state 104
+	MKDISKT:  hyphen path arrow route.    (21)
+
+	.  reduce 21 (src line 188)
+
+
+state 105
+	MKDISKT:  hyphen path arrow quote.route quote 
+
+	route  shift 126
+	.  error
+
+
+state 106
+	MKDISKT:  hyphen name arrow diskName.    (22)
+
+	.  reduce 22 (src line 189)
+
+
+state 107
+	MKDISKT:  hyphen unit arrow id.    (24)
+
+	.  reduce 24 (src line 191)
+
+
+state 108
+	RMDISK:  rmdisk hyphen path arrow quote.route quote 
+
+	route  shift 127
+	.  error
+
+
+state 109
+	FDISKT:  hyphen unit arrow id.    (47)
+
+	.  reduce 47 (src line 245)
+
+
+state 110
+	FDISKT:  hyphen tpe arrow id.    (48)
+
+	.  reduce 48 (src line 246)
+
+
+state 111
+	FDISKT:  hyphen fit arrow id.    (49)
+
+	.  reduce 49 (src line 247)
+
+
+state 112
+	FDISKT:  hyphen delete arrow id.    (50)
+
+	.  reduce 50 (src line 248)
+
+
+state 113
+	FDISKT:  hyphen add arrow digit.    (51)
+
+	.  reduce 51 (src line 249)
+
+
+state 114
+	FDISKT:  hyphen size arrow digit.    (52)
+
+	.  reduce 52 (src line 250)
+
+
 state 115
-	MKFS:  mkfs hyphen id arrow idn hyphen tpe arrow id.    (48)
+	FDISKT:  hyphen name arrow id.    (53)
 
-	.  reduce 48 (src line 238)
+	.  reduce 53 (src line 251)
 
 
-37 terminals, 22 nonterminals
-50 grammar rules, 116/8000 states
+state 116
+	FDISKT:  hyphen path arrow quote.route quote 
+
+	route  shift 128
+	.  error
+
+
+state 117
+	FDISKT:  hyphen path arrow route.    (55)
+
+	.  reduce 55 (src line 253)
+
+
+state 118
+	MKFS:  mkfs hyphen id arrow idn.    (57)
+	MKFS:  mkfs hyphen id arrow idn.hyphen tpe arrow id 
+
+	hyphen  shift 129
+	.  reduce 57 (src line 262)
+
+
+state 119
+	REPT:  hyphen id arrow id.    (28)
+
+	.  reduce 28 (src line 203)
+
+
+state 120
+	REPT:  hyphen name arrow id.    (29)
+
+	.  reduce 29 (src line 204)
+
+
+state 121
+	REPT:  hyphen path arrow quote.route quote 
+
+	route  shift 130
+	.  error
+
+
+state 122
+	REPT:  hyphen path arrow route.    (31)
+
+	.  reduce 31 (src line 206)
+
+
+state 123
+	REPT:  hyphen ruta arrow quote.route quote 
+
+	route  shift 131
+	.  error
+
+
+state 124
+	REPT:  hyphen ruta arrow route.    (33)
+
+	.  reduce 33 (src line 208)
+
+
+state 125
+	MOUNTT:  hyphen path arrow quote route.quote 
+
+	quote  shift 132
+	.  error
+
+
+state 126
+	MKDISKT:  hyphen path arrow quote route.quote 
+
+	quote  shift 133
+	.  error
+
+
+state 127
+	RMDISK:  rmdisk hyphen path arrow quote route.quote 
+
+	quote  shift 134
+	.  error
+
+
+state 128
+	FDISKT:  hyphen path arrow quote route.quote 
+
+	quote  shift 135
+	.  error
+
+
+state 129
+	MKFS:  mkfs hyphen id arrow idn hyphen.tpe arrow id 
+
+	tpe  shift 136
+	.  error
+
+
+state 130
+	REPT:  hyphen path arrow quote route.quote 
+
+	quote  shift 137
+	.  error
+
+
+state 131
+	REPT:  hyphen ruta arrow quote route.quote 
+
+	quote  shift 138
+	.  error
+
+
+state 132
+	MOUNTT:  hyphen path arrow quote route quote.    (38)
+
+	.  reduce 38 (src line 222)
+
+
+state 133
+	MKDISKT:  hyphen path arrow quote route quote.    (23)
+
+	.  reduce 23 (src line 190)
+
+
+state 134
+	RMDISK:  rmdisk hyphen path arrow quote route quote.    (56)
+
+	.  reduce 56 (src line 258)
+
+
+state 135
+	FDISKT:  hyphen path arrow quote route quote.    (54)
+
+	.  reduce 54 (src line 252)
+
+
+state 136
+	MKFS:  mkfs hyphen id arrow idn hyphen tpe.arrow id 
+
+	arrow  shift 139
+	.  error
+
+
+state 137
+	REPT:  hyphen path arrow quote route quote.    (30)
+
+	.  reduce 30 (src line 205)
+
+
+state 138
+	REPT:  hyphen ruta arrow quote route quote.    (32)
+
+	.  reduce 32 (src line 207)
+
+
+state 139
+	MKFS:  mkfs hyphen id arrow idn hyphen tpe arrow.id 
+
+	id  shift 140
+	.  error
+
+
+state 140
+	MKFS:  mkfs hyphen id arrow idn hyphen tpe arrow id.    (58)
+
+	.  reduce 58 (src line 263)
+
+
+39 terminals, 25 nonterminals
+60 grammar rules, 141/8000 states
 0 shift/reduce, 0 reduce/reduce conflicts reported
-71 working sets used
-memory: parser 37/120000
+74 working sets used
+memory: parser 43/120000
 0 extra closures
-99 shift entries, 1 exceptions
-29 goto entries
-9 entries saved by goto default
-Optimizer space used: output 115/120000
-115 table entries, 0 zero
-maximum spread: 37, maximum offset: 51
+121 shift entries, 1 exceptions
+34 goto entries
+10 entries saved by goto default
+Optimizer space used: output 140/120000
+140 table entries, 0 zero
+maximum spread: 39, maximum offset: 67

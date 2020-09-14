@@ -21,6 +21,14 @@ var unmountList = []Unmount{}
 var idChar = 'a'
 var idNum = 0
 
+// Rep Exported
+type Rep struct {
+	Name  string
+	Route string
+	ID    string
+	Path  string
+}
+
 // Disk exported
 type Disk struct {
 	Size  int
@@ -114,6 +122,43 @@ func (d *Disk) CreateDisk() {
 		}
 
 	}
+}
+
+// SetRepName exported
+func (r *Rep) SetRepName(name string) {
+	r.Name = name
+}
+
+// SetRepID exported
+func (r *Rep) SetRepID(id string) {
+	r.ID = id
+}
+
+// SetRepRoute exported
+func (r *Rep) SetRepRoute(route string) {
+	r.Route = route
+}
+
+// SetRepPath exported
+func (r *Rep) SetRepPath(path string) {
+	r.Path = path
+}
+
+// CreateRep exported
+func (r *Rep) CreateRep() {
+	if len(r.ID) == 0 {
+		fmt.Println(">> Falta el parámetro ID. Intente de nuevo.")
+		return
+	} else if len(r.Path) == 0 {
+		fmt.Println(">> Falta el parámetro Path. Intente de nuevo.")
+		return
+	} else if len(r.Name) == 0 {
+		fmt.Println(">> Falta el parámetro Name. Intente de nuevo.")
+		return
+	} else {
+		r.setReport()
+	}
+
 }
 
 // ----------------------------------------- MOUNT --------------------------------------------------------- //
@@ -469,7 +514,7 @@ func ReadFile(route string) {
 		fmt.Println()
 	}
 	//GenGraph(route)
-	graphDisk(route)
+	//graphDisk(route)
 }
 
 func readBytes(file *os.File, size int) []byte {
@@ -489,14 +534,32 @@ func randomNumber() int64 {
 func RemoveDisk(path string) {
 	re := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.dsk`)
 	file := re.FindString(path)
-	fmt.Println(">> ¿Desea eliminar este disco?")
-	bufio.NewReader(os.Stdin).ReadBytes('\n')
-	err := os.Remove(path)
-	if err != nil {
-		fmt.Println(">> File does not exist.")
+	fmt.Println(">> ¿Desea eliminar este disco? (s/n)")
+	reader := bufio.NewReader(os.Stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.TrimRight(input, "\n")
+	if input == "s" || input == "S" {
+		err := os.Remove(path)
+		if err != nil {
+			fmt.Println(">> El archivo no existe.")
+		} else {
+			fmt.Println(">> Disco: " + file + " eliminado.")
+		}
+	} else if input == "n" || input == "N" {
+		fmt.Println(">> Ha elegido no eliminar el disco.")
+		return
 	} else {
-		fmt.Println(">> File: " + file + " successfully removed.")
+		fmt.Println(">> Elija una opción correcta.")
+		return
 	}
+
+	//bufio.NewReader(os.Stdin).ReadBytes('\n')
+	/*	err := os.Remove(path)
+		if err != nil {
+			fmt.Println(">> File does not exist.")
+		} else {
+			fmt.Println(">> File: " + file + " successfully removed.")
+		}*/
 }
 
 // SetUnit exported
@@ -1280,8 +1343,40 @@ func GenGraph(route string) {
 	// ENDS GRAPHVIZ
 }
 
-func graphDisk(route string) {
-	f, err := os.Create("disk.txt")
+func graphDisk(route string, path string) {
+	var fileAux string = ""
+	rePng := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.png`)
+	pathAuxPng := rePng.FindString(path)
+	reJpg := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.jpg`)
+	pathAuxJpg := reJpg.FindString(path)
+	rePdf := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.pdf`)
+	pathAuxPdf := rePdf.FindString(path)
+	reJpeg := regexp.MustCompile(`[a-zA-Z]([a-zA-Z]|[0-9])*\.jpeg`)
+	pathAuxJpeg := reJpeg.FindString(path)
+	f, err := os.Create("/home/disk.txt")
+	var txtAux string = " "
+
+	if len(pathAuxPng) != 0 {
+		fileAux = pathAuxPng
+		res1 := strings.ReplaceAll(fileAux, "png", "txt")
+		txtAux = res1
+		f, err = os.Create(res1)
+	} else if len(pathAuxJpg) != 0 {
+		fileAux = pathAuxJpg
+		res1 := strings.ReplaceAll(fileAux, "jpg", "txt")
+		txtAux = res1
+		f, err = os.Create(res1)
+	} else if len(pathAuxPdf) != 0 {
+		fileAux = pathAuxPdf
+		res1 := strings.ReplaceAll(fileAux, "pdf", "txt")
+		txtAux = res1
+		f, err = os.Create(res1)
+	} else if len(pathAuxJpeg) != 0 {
+		fileAux = pathAuxJpeg
+		res1 := strings.ReplaceAll(fileAux, "jpeg", "txt")
+		txtAux = res1
+		f, err = os.Create(res1)
+	}
 	defer f.Close()
 	if err != nil {
 		fmt.Println(">> Error drawing graph!")
@@ -1363,9 +1458,26 @@ func graphDisk(route string) {
 	}
 
 	f.WriteString("</tr>\n</table>\n>\n];\n}")
-	e := exec.Command("dot", "-Tpng", "disk.txt", "-o", "disk.png")
+	e := exec.Command("dot", "-Tpng", txtAux, "-o", fileAux)
 	if er := e.Run(); er != nil {
 		fmt.Println(">> Error", er)
 		return
 	}
+}
+
+func (r *Rep) setReport() {
+	for _, value := range diskList {
+		if value.MountID == r.ID {
+			fmt.Println("COINCIDENCE")
+			if r.Name == "mbr" {
+				GenGraph(value.Path)
+				return
+			} else if r.Name == "disk" {
+				graphDisk(value.Path, r.Path)
+				return
+			}
+		}
+	}
+	fmt.Println(">> No existe la partición con el ID:", r.ID)
+	return
 }

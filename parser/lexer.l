@@ -56,7 +56,7 @@ id    {letter}({letter}|{digit})*
 letter        [_a-zA-Z]|{unicodeLetter}
 diskName	  {letter}({letter}|"_"|{digit})*"."dsk
 mia_file	  {letter}({letter}|"_"|{digit})+"."mia
-route         "/"("/"|" "|"_"|[a-zA-Z0-9]|".")*
+route         "/"("/"|" "|"_"|[a-zA-Z0-9]|".")* "/"?
 arrow           "-"">"
 hyphen          "-"
 quote			\"
@@ -73,6 +73,8 @@ type  lval.token = string(l.TokenBytes(nil)); return tpe
 pause  lval.token = string(l.TokenBytes(nil)); return pause  
 exec  lval.token = string(l.TokenBytes(nil)); return exec  
 path  lval.token = string(l.TokenBytes(nil)); return path  
+ruta  lval.token = string(l.TokenBytes(nil)); return ruta  
+
 mount  lval.token = string(l.TokenBytes(nil)); return mount  
 unmount  lval.token = string(l.TokenBytes(nil)); return unmount  
 hyphen  lval.token = string(l.TokenBytes(nil)); return hyphen  
@@ -83,6 +85,7 @@ mkdisk  lval.token = string(l.TokenBytes(nil)); return mkdisk
 delete  lval.token = string(l.TokenBytes(nil)); return delete  
 rmdisk  lval.token = string(l.TokenBytes(nil)); return rmdisk  
 fit  lval.token = string(l.TokenBytes(nil)); return fit 
+rep  lval.token = string(l.TokenBytes(nil)); return rep 
 fdisk  lval.token = string(l.TokenBytes(nil)); return fdisk  
 {id} lval.token = string(l.TokenBytes(nil)); return id 
 {hyphen} lval.token = string(l.TokenBytes(nil)); return hyphen
